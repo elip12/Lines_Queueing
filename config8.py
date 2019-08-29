@@ -1,42 +1,30 @@
 import random
 import math
-import json
-
-
-# [ all data:
-#     [ group list
-#         { round object
-#             settings object
-#             players list[
-#                 player object
-#             ]
-#         }
-#     ]
-# ]
-
 data = [[
     {  # Type 1: double, no communication, 8 players
         #
         "settings": {
-            "duration": 18000,
-            "swap_method": "double",
+            "duration": 135,
+            "swap_method": "bid",
             "pay_method": "gain",
             "k": 0.8,
             "service_distribution": 1,
             "discrete": True,
-            "messaging": True,
+            "messaging": False,
         },
-        "players": [
+        "players": [[
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
-        ],
-    } for i in range(2)
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            {"pay_rate": 4, "endowment": 4, "c": random.random()},
+        ] for i in range(2)],
+    },
 
-] for i in range(2)]
-data[1][1]['settings']['messaging'] = False
-data[1][1]['settings']['swap_method'] = "bid"
+]]
 
 
 def shuffle(data):
@@ -65,7 +53,6 @@ def export_csv(fname, data):
 # formats data to make it easier for models.py to parse it
 def export_data():
     # error handling & filling defaults
-
     for i, group in enumerate(data):
         for j, period in enumerate(group):
             if "settings" not in period:
@@ -129,8 +116,8 @@ def export_data():
 
     print("exported data is")
     print(data[0][0])
-    # data.append(data[0])
-    with open('older.json', 'w') as outfile:
-        json.dump(data, outfile)
 
     return data
+
+
+100

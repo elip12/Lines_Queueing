@@ -2,7 +2,7 @@
 {% load staticfiles otree %}
 
 {% comment %}
-    
+
     Eli Pandolfo <epandolf@ucsc.edu>
 
     <!-- otree redwood:
@@ -12,20 +12,21 @@
 
         However, if you call the function from the HTML or from a function that runs automatically
         such as window.onload, it works fine. -->
-    
+
 {% endcomment %}
 
 {% block scripts %}
 
     <script src="{% static "js/vue.js" %}"></script>
     <script type='text/javascript'>
+        var g_data = {{ data | json }}
         // time when user enters the queue room
         // because there is a wait page, this is when all players simultaneously arrive
         window.onload = function () {
             document.getElementById('arrive_time').value = new Date().toISOString()
         }
-        
-        // time when a player leaves the service room 
+
+        // time when a player leaves the service room
         time_sr = function() {
             document.getElementById('sr_time').value = new Date().toISOString()
         }
@@ -55,7 +56,7 @@
             console.log('period ended');
         });
 
-        /* 
+        /*
             Vue machine
             Holds all data for a single player.
             Because of a property (design flaw) of Vue that objects stored in vm.data are promises,
@@ -68,18 +69,36 @@
         var vm = new Vue({
             delimiters: ['{', '}'],
             el: '#app',
+            mounted: function(){
+                setTimeout(()=>{
+                    this.initialOver = true;
+                }, this.service_time * 1000)
+            },
+
             data: function() {
                 return {
+                    initialOver: false,
+                    initialPaid: false,
+                    debug: 'none',
+
+
 
                     // player data
+                    paidBids: [],
+                    period: 0,
+                    paid: false,
+                    message: 'placeholder',
                     start_pos: {{ start_pos_ | json }},
-                    pay_rate: {{ pay_rate_ | json }},
+                    end_pos: -1,
+                    c: {{ c_ | json }},
+                    pay_rate: {{ pay_rate_ | json }}, // pay rate == value
                     service_time: {{ service_time_ | json }},
                     time_spent_in_front: 0,
                     ID: {{ id | json }},
                     served: false,
                     endowment: {{ endowment_ | json }},
                     payoff: {{ endowment_ | json }},
+                    tokens: 0,
                     position: {{ start_pos_ | json }},
                     in_trade: false, // state
                     requested: null, // person
@@ -93,7 +112,10 @@
 
                     //group data
                     service_color: '#545353',
+                    discrete: {{ discrete | json}},
+                    messaging: {{ messaging | json}},
                     swap_method: {{ swap_method_ | json}},
+                    tokenSwap: {{ tokenSwap | json}},
                     pay_method: {{ pay_method_ | json}},
                     start_time: null,
                     now: null,
@@ -119,7 +141,8 @@
                         10: true,
                     },
                     metadata: null,
-                    channel : document.getElementById('channel')
+                    channel : document.getElementById('channel'),
+
                 }
             },
             // Vue lifecycle hook: this function gets called when the Vue instance is created
@@ -129,6 +152,7 @@
                 setInterval(function() {
                     this.now = parseInt(new Date().getTime() / 1000)
                 }.bind(this), 999) // assume a 1 ms delay for all information transit and logic
+                this.paidCost = new Array(this.num_players).fill(false)
             },
             // computed functions get called every time one of their dependencies changes
             computed: {
@@ -138,11 +162,14 @@
                 },
                 h: function() {
                     return this.num_players > 6 ? window.innerHeight : window.innerHeight * 0.55
-                }
+                },
+
             },
             // watch functions are called every time the property associated with the function name
             // changes
             watch: {
+
+
                 // updates the alert that the player sees
                 current_alert: function() {
                     clearInterval(this.alert_interval)
@@ -156,7 +183,7 @@
                             clearInterval(this.alert_interval)
                         }
                         else if(this.dur >= this.alert_duration - this.alert_fadeout) {
-                            this.alert_opacity = 1 - 
+                            this.alert_opacity = 1 -
                                 (this.dur - (this.alert_duration - this.alert_fadeout))
                             this.dur += 0.01
                         }
@@ -167,20 +194,38 @@
                 },
                 // gets called every time this.now is updated, every second
                 // updates player's service time served, and payoff
+                // session info: two levels of treatment: trade with money, or without money
+                // swap vs cut
+
                 now: function() {
+                    let period = g_data[this.ID]['period']
                     if(this.service_color == '#28b738')
                         this.service_color = '#545353'
-                    if(this.served == true) {
-                        if (this.pay_method == 'gain') {
-                            this.payoff += this.pay_rate
-                        }
-                    }
-                    else {
+
+                    if(!this.served){  //still waiting outside
+
                         this.waiting_time += 1
-                        if(this.pay_method == 'lose') {
+                        /*if(this.pay_method == 'lose') {
                             this.payoff -= this.pay_rate
+                        }*/
+                        if(this.position != 0){
+                            if(!this.discrete){
+                                this.payoff -= this.c
+                            }
+                            else if(!this.paidCost[period - 1]){
+                                if(!isNaN(period)){
+                                    this.payoff -= this.c;
+                                    this.paidCost[period - 1] = true
+                                }
+
+                            }
+
                         }
+
+
+
                         if(this.position == 0) {
+                            this.end_pos = this.num_players_service
                             if(this.time_spent_in_front == this.service_time - 1) {
                                 this.service_color = '#28b738'
                                 this.next()
@@ -188,17 +233,28 @@
                                 this.served = true
                             }
                             else {
+                                if(this.discrete && !this.paid){
+                                    this.payoff += this.pay_rate
+                                    this.paid = true
+
+
+                                }
+                                else if(!this.discrete){
+                                    this.payoff += this.pay_rate
+
+                                }
                                 this.time_spent_in_front += 1
                             }
                         }
 
-                        // comment this if clause out if you want to test without anyone 
+                        // comment this if clause out if you want to test without anyone
                         // ever entering the service room
-                        if(this.position == 1 && this.num_players_service == 0)
+                        if(this.position == 1 && this.num_players_service == 0 && this.initialOver)
                         {
+
                             this.service_color = '#28b738'
                             this.next()
-                        }  
+                        }
                     }
                 },
                 // used to determine whether buttons are clickable
@@ -222,12 +278,14 @@
                 request: function(obj) {
                     pos = obj['pos']
                     bid = obj['bid']
-                    for(var p in g_data) {
+                    message = obj['message']
+                    for(let p in g_data) {
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
                             if(g_data[p]['pos'] == pos) {
                                 g_data[this.ID]['requesting'] = g_data[p]['id']
                                 g_data[this.ID]['last_trade_request'] = new Date().getTime()
                                 g_data[this.ID]['bid'] = bid
+                                g_data[this.ID]['message'] = message
                             }
                         }
                     }
@@ -235,19 +293,33 @@
                 },
                 // respond to a request: called when a player clicks a yes/no button
                 respond: function(yesno) {
+                    // XXX
                     g_data[this.ID]['accepted'] = yesno
                     this.update()
+                },
+
+                displayMode: function(){
+                    return this.swap_method.charAt(0).toUpperCase() + this.swap_method.slice(1)
                 },
                 // called when someone's service time has run out; someone is about to enter the
                 // service room
                 next: function() {
-                    for(var p in g_data) {
+                    for(p in g_data) {
+
                         if (g_data.hasOwnProperty(p) && p != 'metadata') {
+
+                            if(g_data[p]['period'] == undefined){
+
+                                g_data[p]['period'] = 0
+                            }
+                            g_data[p]['period'] += 1
                             g_data[p]['pos']--
                             g_data[p]['num_players_queue']--
                             g_data[p]['num_players_service']++
                             g_data[p]['next'] = true
+                            g_data[p]['bid'] = this.bid
                         }
+
                     }
                     this.update()
                 },
@@ -274,11 +346,13 @@
         */
         Vue.component( 'q-bubble', {
             delimiters: ['{', '}'],
-            props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'swap_method'],
+            props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'swap_method',
+            'swap', 'message', 'messaging'],
             data: function() {
                 return {
                     bid: null,
                     bid_clicked: false,
+
                 }
             },
             computed: {
@@ -289,28 +363,46 @@
                     return vm.bid
                 }
             },
+
+
             methods: {
                 bid_click: function() {
                     this.bid_clicked = true
                 },
                 send_click: function(bid) {
                     this.bid_clicked = false
-                    this.bid = document.getElementById('bid').value
+                    this.message = ""
+
+                    if(this.messaging && document.getElementById('inputMessage')){
+                        this.message = document.getElementById('inputMessage').value
+                    }
+
+
+                    if(this.swap_method == 'swap'){
+
+                        vm.request({pos: this.comp_pos, bid: null, message: this.message})
+                    }
+
 
 
                     // for player 1's bid, vm bid(2) will be null
                     // when player 2 gives bid in response, vm bid(2) will be player 1's original bid
 
-                    if (this.swap_method == 'double') {
+                    else if (this.swap_method == 'double') {
+                        this.bid = parseFloat(document.getElementById('bid').value)
                         console.log("double auction format in send_click")
                         console.log("bid 1 is: " + this.bid)
-                        console.log("vm bid (2) is: " +vm.bid)
+                        console.log("vm bid (2) is: " + vm.bid)
+                        console.log(typeof this.bid)
+                        console.log(typeof vm.bid)
 
-                        if(this.bid < 0 || this.bid > vm.payoff){
-                            vm.current_alert = 'Your bid must be between 0 and your current payoff'
+
+                        if(this.bid < 0 || isNaN(this.bid)){
+                            vm.current_alert = "Invalid bid"
                         }
                         else {
                             if (vm.bid != null) {
+                                vm.bid = parseFloat(vm.bid)
                                 if (vm.bid > this.bid) {
                                     console.log("swap accepted")
 
@@ -335,145 +427,187 @@
                             }
                             // only the requester has given his/her bid
                             else {
-                                vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+                                vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2), message: this.message})
                             }
                         }
                     }
 
                     else {
-                        if(this.bid < 0 || this.bid > vm.payoff){
+                        this.bid = parseFloat(document.getElementById('bid').value)
+
+                        if(this.bid < 0 || this.bid > vm.payoff || isNaN(this.bid)){
                                 vm.current_alert = 'Your bid must be between 0 and your current payoff'
                         }
+
                         else {
-                            vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+                            vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2),
+                            message: this.message})
                         }
                     }
                 }
             },
+            mounted(){
+                console.log(this.comp_pos == this.num_players - 1)
+            },
             template: `
                 <div v-if="num_players >= comp_pos">
-                    <div class="row padded-row">
-                        <svg class="svg">
-                            <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
-                            <circle cx="45" cy="60" r="40" style="fill: #545353;" 
-                                v-if="comp_pos == self_pos"/>
-                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
-                                { comp_pos }
-                            </text>
-                            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
-                                { comp_pos }
-                            </text>
-                        </svg>
-                    </div>
+    <div class="row padded-row">
+        <svg class="svg">
+            <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
+            <circle cx="45" cy="60" r="40" style="fill: #545353;"
+                v-if="comp_pos == self_pos"/>
+            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
+               { comp_pos }
+            </text>
+            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
+                { comp_pos }
+            </text>
+        </svg>
+    </div>
 
-                    <div class="row btn-row" v-if="swap_method == 'swap'">
-                        
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Swap</button>
-                        
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
-                            disabled>Swap</button>
-                        
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-yes"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(1)">Yes</button>
-                        </div> 
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-no"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(0)">No</button>
-                        </div>
-                    </div>
+    <div class="row btn-row" v-if="swap_method == 'swap'">
+        <!--
+        <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Swap</button>
 
-                    <div class="row btn-row" v-if="swap_method == 'cut'">
-                        
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="comp_pos < self_pos && trade_allowed"
-                            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Cut</button>
-                        
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="comp_pos < self_pos && !trade_allowed"
-                            disabled>Cut</button>
-                        
-                    </div>
+        -->
 
-                    <div class="row btn-row" v-if="swap_method == 'bid'">
+        <button type="button" class="btn btn-large"
+        style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+        v-on:click="send_click">Swap</button>
 
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="bid_click">Bid</button>
+        <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Swap</button>
 
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
-                            disabled>Bid</button>
+        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed && messaging"  />
 
-                        <input v-if="bid_clicked && comp_pos == self_pos - 1"
-                            type="number" id="bid" max="vm.payoff" min="0"
-                            style="width: 58%; margin-left: 22px"
-                            onKeyPress="if (event.keyCode == 13) return false"/>
 
-                         <button type="button" class="btn btn-large"
-                            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="send_click">Send</button>
 
-                        <p v-if="comp_pos == self_pos + 1 && requested != null"
-                            style="width: 100%; text-align: center">
-                            Bid: { in_bid }
-                        <p>
 
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-yes"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(1)">Yes</button>
-                        </div>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-no"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                onclick="vm.respond(0)">No</button>
-                        </div>
-                    </div>
 
-                    <!-- DOUBLE AUCTION CODE BEGINS HERE -->
-                    <div class="row btn-row" v-if="swap_method == 'double'">
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="bid_click">Bid</button>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-yes"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(1)">Yes</button>
+        </div>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-no"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(0)">No</button>
+        </div>
+        <div id="displayMessage" class="col-6"
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging">
+        message from {comp_pos}: {message} </div>
+    </div>
 
-                        <button type="button" class="btn btn-large"
-                            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
-                            disabled>Bid</button>
 
-                        <input v-if="bid_clicked && comp_pos == self_pos - 1"
-                            type="number" id="bid" max="vm.payoff" min="0"
-                            style="width: 58%; margin-left: 22px"
-                            onKeyPress="if (event.keyCode == 13) return false"/>
+    <div class="row btn-row" v-if="swap_method == 'cut'">
 
-                         <button type="button" class="btn btn-large"
-                            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
-                            v-on:click="send_click">Send</button>
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="comp_pos < self_pos && trade_allowed"
+            v-on:click="$emit('request', {pos: comp_pos, bid: null})">Cut</button>
 
-                        <p v-if="comp_pos == self_pos + 1 && requested != null"
-                            style="width: 100%; text-align: center">
-                            <!-- Bid: { in_bid } -->
-                        <p>
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="comp_pos < self_pos && !trade_allowed"
+            disabled>Cut</button>
 
-                        <input v-if="comp_pos == self_pos + 1 && requested != null"
-                            type="number" id="bid" max="vm.payoff" min="0"
-                            style="width: 58%; margin-left: 22px"
-                            onKeyPress="if (event.keyCode == 13) return false"/>
+    </div>
 
-                        <div class="col-6">
-                            <button type="button" class="btn btn-large btn-yes"
-                                style="margin-left: 22 px;"
-                                v-if="comp_pos == self_pos + 1 && requested != null"
-                                v-on:click="send_click">Send</button>
-                        </div>
-                    </div>
+    <div class="row btn-row" v-if="swap_method == 'bid'">
 
-                </div>
+
+
+
+
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="bid_click">Bid</button>
+
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Bid</button>
+
+        <input v-if="bid_clicked && comp_pos == self_pos - 1"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; margin-left: 22px; margin-bottom: 5px;"
+            onKeyPress="if (event.keyCode == 13) return false"/>
+
+        <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+
+         <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="send_click">Send</button>
+
+        <p v-if="comp_pos == self_pos + 1 && requested != null"
+            style="width: 100%; text-align: center">
+            Bid: { in_bid }
+        <p>
+        <div id="displayMessage" class="col-6"
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging">
+        message from {comp_pos}: {message} </div>
+
+
+
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-yes"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(1)">Yes</button>
+        </div>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-no"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(0)">No</button>
+        </div>
+    </div>
+
+    <!-- DOUBLE AUCTION CODE BEGINS HERE -->
+    <div class="row btn-row" v-if="swap_method == 'double'">
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="bid_click">Bid</button>
+
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Bid</button>
+
+        <input v-if="bid_clicked && comp_pos == self_pos - 1"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; margin-left: 22px"
+            onKeyPress="if (event.keyCode == 13) return false"/>
+
+            <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+
+         <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="send_click">Send</button>
+
+        <p v-if="comp_pos == self_pos + 1 && requested != null"
+            style="width: 100%; text-align: center">
+            <!-- Bid: { in_bid } -->
+        <div id="displayMessage" class="col-6"
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging">
+        message from {comp_pos}: {message} </div>
+        <p>
+        <div style="text-align: center;">
+            <input v-if="comp_pos == self_pos + 1 && requested != null"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; "
+            onKeyPress="if (event.keyCode == 13) return false"/>
+            <button type="button" class="btn btn-large btn-yes"
+                style="margin-left: 0px; margin-top: 5px"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                v-on:click="send_click">Send</button>
+
+
+
+        </div>
+
+    </div>
+
+</div>
+</div>
             `
         })
 
@@ -484,7 +618,7 @@
             props: ['num_players', 'comp_pos', 'self_pos'],
             template: `
                 <div class="col-4" v-if="num_players >= -comp_pos + 1">
-                    <svg class="svg-s"> 
+                    <svg class="svg-s">
                         <circle cx="45" cy="60" r="40" style="fill: #545353;"
                             v-if="comp_pos == self_pos"/>
                         <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
@@ -494,15 +628,16 @@
         })
 
         // all group data pertinent to swaps and player states
-        var g_data = {{ data | json }}
+
 
         // event listener to check for events sent by server over channel
         vm.channel.addEventListener('event', function(event) {
-            
+
             // for debugging
             //console.log(event.detail.channel) // "swap"
             //console.log(new Date().getTime()) // timestamp
-            console.log(event.detail.payload) // test_order
+            // console.trace(event.detail.payload) // test_order
+
             //console.log(event.detail.payload['metadata']) // previous trade records
 
             g_data = event.detail.payload
@@ -512,14 +647,24 @@
             vm.position = p.pos
             vm.in_trade = p.in_trade
             vm.requested = p.requested
+            vm.message = p.message
             vm.requesting = p.requesting
             vm.accepted = p.accepted
             vm.current_alert = p.alert
             vm.num_players_queue = p.num_players_queue
             vm.num_players_service = p.num_players_service
+
             vm.last_event = parseInt(new Date().getTime() / 1000)
             if(p.in_trade == false && p.bid != null) {
-                vm.payoff = Number(vm.payoff) + Number(p.bid)
+
+                if(vm.tokenSwap){
+                    vm.tokens += Number(p.bid)
+                    console.log(`i have ${vm.tokens} tokens`)
+                }
+
+                else{
+                    vm.payoff = Number(vm.payoff) + Number(p.bid)
+                }
                 p.bid = null
             }
             vm.bid = p.bid
@@ -539,6 +684,32 @@
 
 {% block styles %}
     <style>
+        #inputMessage {
+            left: 50%;
+            z-index: 10000;
+            position: relative;
+            min-width: 200px;
+            transform: translateX(-50%);
+            margin: 10px;
+            border: 2px solid black;
+            border-radius: 3px;
+            font-size: 10px;
+
+        }
+        #displayMessage {
+            left: 50%;
+            z-index: 10000;
+            position: relative;
+            min-width: 200px;
+            transform: translateX(-50%);
+            margin: 10px;
+            border: 2px solid black;
+            border-radius: 3px;
+            font-size: 10px;
+            word-break: break-word;
+
+        }
+
         .dev {
             border-style: solid;
             border-width: 1px;
@@ -556,13 +727,13 @@
         .infoborder {
             border-right: solid;
             border-bottom: solid;
-            border-width: 1px; 
+            border-width: 1px;
             border-color: #c0c0c0;
         }
         .infocol {
             text-align: center;
             color: #545353;
-            font-size: 18px;
+            font-size: 12px;
             font-family: sans-serif;
         }
         .alertbar {
@@ -576,6 +747,7 @@
         }
         .queue-1 {
             background-color: #f3f2f2;
+
         }
         .queue-2 {
             background-color: #fbfbfb;
@@ -625,6 +797,7 @@
     <input type="hidden" name="time_Queue" id="arrive_time" />
     <input type="hidden" name="time_Service" id="sr_time" />
 
+
     <redwood-period></redwood-period>
     <redwood-channel
         id="channel"
@@ -643,7 +816,10 @@
         <input type="hidden" name="swap_method" v-model="swap_method"/>
         <input type="hidden" name="pay_method" v-model="pay_method"/>
         <input type="hidden" name="waiting_time" v-model="waiting_time"/>
+        <input type="hidden" name="end_pos" v-model="end_pos"/>
         <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
+        <input type="hidden" name="tokens" v-model="tokens"/>
+
 
         <!-- {% chat %} -->
 
@@ -656,25 +832,29 @@
                         {{ round_ }}
                     </div>
                     <div class="col-2 infocol infoborder">
-                        Endowment: <br>
-                        ${ endowment.toFixed(2) }
+                        Endowment: { endowment.toFixed(2) } <br>
+                        Cost: { c.toFixed(3) } <br>
+                        Value: { pay_rate }
+
                     </div>
                     <div class="col-2 infocol infoborder">
-                        Pay Rate: ({ pay_method })<br>
-                        ${ pay_rate } / second
+                        Mode: { displayMode() } <br>
+                        Messaging: <span v-if="messaging"> Enabled </span> <span v-else>Disabled</span> <br>
+                        Service Time:  { service_time }s
                     </div>
+
                     <div class="col-2 infocol infoborder">
-                        Service Time: <br>
-                        { service_time } seconds
+                        Current Payoff: <br>
+                        { payoff.toFixed(2) }
+
+
                     </div>
-                    <div class="col-2 infocol infoborder">
-                        Payoff: <br>
-                        ${ payoff.toFixed(2) }
-                    </div>
-                    <div class="col-2 infocol" style="font-size: 45px;
+                    <div class="col-2 infocol" style="font-size: 28px;
                         border-bottom: solid; border-width: 1px; border-color: #bbbbbb">
+                        <div style="font-size: 12px;"> Time Remaining:</div>
                         { time_remaining_period }
                     </div>
+                    <div class="col-2 infocol infoborder"> </div>
                 </div>
                 <div class="row alertbar">
                     <div class="col-8" v-bind:style="{ opacity: alert_opacity }">
@@ -686,6 +866,8 @@
                         <div class="row" v-bind:style="{ height: (.6625 * h - 2) + 'px' }">
                             <div class="col-2 queue-1">
                                 <q-bubble
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="5"
                                     v-bind:self_pos="position"
@@ -694,6 +876,8 @@
                                     v-on:request="request">
                                 </q-bubble>
                                 <q-bubble
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="6"
                                     v-bind:self_pos="position"
@@ -704,6 +888,8 @@
                             </div>
                             <div class="col-2 queue-2">
                                 <q-bubble
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
                                     v-bind:num_players="num_players_queue"
                                     comp_pos="4"
                                     v-bind:self_pos="position"
@@ -713,6 +899,8 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
                                     comp_pos="7"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -723,6 +911,8 @@
                             <div class="col-2 queue-1">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
                                     comp_pos="3"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -731,6 +921,7 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
                                     comp_pos="8"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -741,6 +932,7 @@
                             <div class="col-2 queue-2">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
                                     comp_pos="2"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -749,6 +941,7 @@
                                 </q-bubble>
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
                                     comp_pos="9"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -759,6 +952,7 @@
                             <div class="col-2 queue-1">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
                                     comp_pos="1"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
@@ -766,14 +960,14 @@
                                     v-on:request="request">
                                 </q-bubble>
                             </div>
-                            <div class="col-2 queue-2" 
+                            <div class="col-2 queue-2"
                                 v-bind:style="{ 'border-left': 'solid', 'border-right': 'solid',
                                     'border-width': '1px', 'border-color': service_color }">
                                 <div v-if="num_players_service > 0 && num_players_service <= num_players">
                                     <div class="row padded-row">
-                                        <svg class="svg"> 
+                                        <svg class="svg">
                                             <circle cx="45" cy="60" r="40" v-if="position != 0"/>
-                                            <circle cx="45" cy="60" r="40" style="fill: #545353;" 
+                                            <circle cx="45" cy="60" r="40" style="fill: #545353;"
                                                 v-if="position == 0"/>
                                             <text v-bind:x="40 - (parseInt((service_time
                                                 - time_spent_in_front) / 10) * 4)" y="135"
@@ -861,7 +1055,7 @@
 {% endblock %}
 
 {% comment %}
-        
+
 {% endcomment %}
 
 
