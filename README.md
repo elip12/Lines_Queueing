@@ -25,6 +25,7 @@ in the queue.
 Otree documentation: https://otree.readthedocs.io/en/latest/
 Demo server where you can play this a configuration of this app: leeps-otree.ucsc.edu:8000/demo. Click 'lines fork'.
 
+## License
 This software is licensed under the MIT license.
 Copyright 2019 Eli Pandolfo
 
