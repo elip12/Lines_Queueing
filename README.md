@@ -1,5 +1,5 @@
 # Lines_Queueing
-Otree experiment
+Otree experiment written for the LEEPS Lab at the University of California, Santa Cruz.
 
 
 ## Description
