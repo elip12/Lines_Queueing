@@ -18,25 +18,30 @@ data = [[
     {  # Type 1: double, no communication, 8 players
         #
         "settings": {
-            "duration": 18000,
-            "swap_method": "double",
+            "duration": 1800,
+            "swap_method": "take/Leave",
             "pay_method": "gain",
             "k": 0.8,
             "service_distribution": 1,
             "discrete": True,
-            "messaging": True,
+            "messaging": False,
+            #"tokenSwap": True,
         },
         "players": [
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
+            #{"pay_rate": 4, "endowment": 4, "c": random.random()},
+            #{"pay_rate": 4, "endowment": 4, "c": random.random()},
         ],
-    } for i in range(2)
+    } for i in range(4)
 
-] for i in range(2)]
-data[1][1]['settings']['messaging'] = False
-data[1][1]['settings']['swap_method'] = "bid"
+] ]
+# data[1][1]['settings']['messaging'] = False
+data[0][1]['settings']['swap_method'] = "swap"
+data[0][2]['settings']['swap_method'] = "token"
+data[0][3]['settings']['swap_method'] = "double"
 
 
 def shuffle(data):

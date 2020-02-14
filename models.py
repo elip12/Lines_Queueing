@@ -31,9 +31,13 @@ class Constants(BaseConstants):
     num_players = sum([len(group[0]["players"]) for group in config])
     num_players = len(config[0][0]["players"])
 
+    print("NUM PLAYERS: ", num_players)
+
     players_per_group = len(config[0][0]["players"])
 
-    players_per_group = 4
+    print("PLAYERS PER GROUP: ", players_per_group)
+
+    #players_per_group = 4
 
     # these will be displayed to players in the UI. Defined here for consistency and
     # a central location
@@ -362,6 +366,13 @@ class Group(RedwoodGroup):
                         if swap_method == "swap":
                             p2["bid"] = None
 
+                        elif swap_method == 'token':
+                                
+                            #p2["bid"] = -p1["bid"]    
+
+                            p2["tokens"] -= 1
+                            p1["tokens"] += 1
+
                         else:
                             print("YO")
                             print(p2["bid"])
@@ -438,6 +449,7 @@ class Subsession(BaseSubsession):
                     "num_players_queue": Constants.num_players,
                     "num_players_service": 0,
                     "next": False,
+                    "tokens": 0,
                 }
 
                 self.session.vars[self.round_number][g_index][p.id_in_group] = p_data

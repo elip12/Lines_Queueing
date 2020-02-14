@@ -50,7 +50,7 @@ class QueueService(Page):
 
     def vars_for_template(self):
         g_index = self.participant.vars[self.round_number]["group"]
-        self.group.groupTrades = "bongoman"
+        self.group.groupTrades = "congoman"
         self.player.discrete = Constants.config[g_index][self.round_number -
                                                          1]["settings"]["discrete"]
         self.player.messaging = Constants.config[g_index][self.round_number -
