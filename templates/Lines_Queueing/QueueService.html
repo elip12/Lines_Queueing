@@ -45,7 +45,6 @@
             oTree.group = isNaN(oTree.group) ? null : oTree.group;
             oTree.role = "{{ player.role }}";
             oTree.participantCode = "{{ player.participant.code }}";
-            oTree.appName = "{{ subsession.app_name }}";
             oTree.idInGroup = "{{ player.id_in_group }}";
             oTree.csrfToken = "{{ csrf_token }}";
             {% if view.is_debug %}
@@ -462,13 +461,13 @@
 <div v-if="num_players >= comp_pos">
     <div class="row padded-row">
         <svg class="svg">
-            <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
-            <circle cx="45" cy="60" r="40" style="fill: #545353;"
+            <circle cx="40" cy="60" r="35" v-if="comp_pos != self_pos"/>
+            <circle cx="40" cy="60" r="35" style="fill: #545353;"
                 v-if="comp_pos == self_pos"/>
-            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
+            <text v-bind:x="35 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
                { comp_pos }
             </text>
-            <text v-bind:x="40 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
+            <text v-bind:x="35 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
                 { comp_pos }
             </text>
         </svg>
@@ -639,9 +638,9 @@
             template: `
                 <div class="col-4" v-if="num_players >= -comp_pos + 1">
                     <svg class="svg-s">
-                        <circle cx="45" cy="60" r="40" style="fill: #545353;"
+                        <circle cx="40" cy="60" r="35" style="fill: #545353;"
                             v-if="comp_pos == self_pos"/>
-                        <circle cx="45" cy="60" r="40" v-if="comp_pos != self_pos"/>
+                        <circle cx="40" cy="60" r="35" v-if="comp_pos != self_pos"/>
                     </svg>
                 </div>
             `
@@ -889,9 +888,31 @@
                     </div>
                 </div>
                 <div class="row" v-bind:style="{ height: .6625 * h + 'px;' }">
-                    <div class="col-8 queue" style="border-width: 1px">
+                    <div class="col-7 queue" style="border-width: 1px">
                         <div class="row" v-bind:style="{ height: (.6625 * h - 2) + 'px' }">
                             <div class="col-2 queue-1">
+                                <q-bubble
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="6"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="7"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
+                            <div class="col-2 queue-2">
                                 <q-bubble
                                     v-bind:message="message"
                                     v-bind:messaging="messaging"
@@ -903,32 +924,10 @@
                                     v-on:request="request">
                                 </q-bubble>
                                 <q-bubble
-                                    v-bind:message="message"
-                                    v-bind:messaging="messaging"
-                                    v-bind:num_players="num_players_queue"
-                                    comp_pos="6"
-                                    v-bind:self_pos="position"
-                                    v-bind:requested="requested"
-                                    v-bind:swap_method="swap_method"
-                                    v-on:request="request">
-                                </q-bubble>
-                            </div>
-                            <div class="col-2 queue-2">
-                                <q-bubble
-                                    v-bind:message="message"
-                                    v-bind:messaging="messaging"
-                                    v-bind:num_players="num_players_queue"
-                                    comp_pos="4"
-                                    v-bind:self_pos="position"
-                                    v-bind:requested="requested"
-                                    v-bind:swap_method="swap_method"
-                                    v-on:request="request">
-                                </q-bubble>
-                                <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     v-bind:message="message"
                                     v-bind:messaging="messaging"
-                                    comp_pos="7"
+                                    comp_pos="8"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
                                     v-bind:swap_method="swap_method"
@@ -940,27 +939,7 @@
                                     v-bind:num_players="num_players_queue"
                                     v-bind:message="message"
                                     v-bind:messaging="messaging"
-                                    comp_pos="3"
-                                    v-bind:self_pos="position"
-                                    v-bind:requested="requested"
-                                    v-bind:swap_method="swap_method"
-                                    v-on:request="request">
-                                </q-bubble>
-                                <q-bubble
-                                    v-bind:num_players="num_players_queue"
-                                    v-bind:message="message" v-bind:messaging="messaging"
-                                    comp_pos="8"
-                                    v-bind:self_pos="position"
-                                    v-bind:requested="requested"
-                                    v-bind:swap_method="swap_method"
-                                    v-on:request="request">
-                                </q-bubble>
-                            </div>
-                            <div class="col-2 queue-2">
-                                <q-bubble
-                                    v-bind:num_players="num_players_queue"
-                                    v-bind:message="message" v-bind:messaging="messaging"
-                                    comp_pos="2"
+                                    comp_pos="4"
                                     v-bind:self_pos="position"
                                     v-bind:requested="requested"
                                     v-bind:swap_method="swap_method"
@@ -976,7 +955,47 @@
                                     v-on:request="request">
                                 </q-bubble>
                             </div>
+                            <div class="col-2 queue-2">
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="3"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="10"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
                             <div class="col-2 queue-1">
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="2"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="11"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
+                            <div class="col-2 queue-2">
                                 <q-bubble
                                     v-bind:num_players="num_players_queue"
                                     v-bind:message="message" v-bind:messaging="messaging"
@@ -986,24 +1005,33 @@
                                     v-bind:swap_method="swap_method"
                                     v-on:request="request">
                                 </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="12"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
                             </div>
-                            <div class="col-2 queue-2"
-                                v-bind:style="{ 'border-left': 'solid', 'border-right': 'solid',
-                                    'border-width': '1px', 'border-color': service_color }">
-                                <div v-if="num_players_service > 0 && num_players_service <= num_players">
-                                    <div class="row padded-row">
-                                        <svg class="svg">
-                                            <circle cx="45" cy="60" r="40" v-if="position != 0"/>
-                                            <circle cx="45" cy="60" r="40" style="fill: #545353;"
-                                                v-if="position == 0"/>
-                                            <text v-bind:x="40 - (parseInt((service_time
-                                                - time_spent_in_front) / 10) * 4)" y="135"
-                                                v-if="position == 0">
-                                                { service_time - time_spent_in_front }
-                                             </text>
-                                        </svg>
-                                    </div>
-                                </div>
+                        </div>
+                    </div>
+                    <div class="col-1 queue-1"
+                        v-bind:style="{ 'border-left': 'solid', 'border-right': 'solid',
+                            'border-width': '1px', 'border-color': service_color }">
+                        <div v-if="num_players_service > 0 && num_players_service <= num_players">
+                            <div class="row padded-row">
+                                <svg class="svg">
+                                    <circle cx="40" cy="60" r="35" v-if="position != 0"/>
+                                    <circle cx="40" cy="60" r="35" style="fill: #545353;"
+                                        v-if="position == 0"/>
+                                    <text v-bind:x="35 - (parseInt((service_time
+                                        - time_spent_in_front) / 10) * 4)" y="135"
+                                        v-if="position == 0">
+                                        { service_time - time_spent_in_front }
+                                     </text>
+                                </svg>
                             </div>
                         </div>
                     </div>
@@ -1068,6 +1096,16 @@
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
                                         comp_pos="-10"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-11"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-12"
                                         v-bind:self_pos="position">
                                     </s-bubble>
                                 </div>

@@ -124,6 +124,8 @@ class Player(BasePlayer):
 
 
 class Group(RedwoodGroup):
+    
+    groupTrades = models.LongStringField()
 
     # needed for otree redwood; this should replace the need for the get_timeout_seconds method
     # in pages.QueueService, but for some reason does has no effect. This is essentially a wrapper
