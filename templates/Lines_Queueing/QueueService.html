@@ -133,6 +133,7 @@
             },
             // Vue lifecycle hook: this function gets called when the Vue instance is created
             created: function() {
+                this.repaint()
                 this.start_time = parseInt(new Date().getTime() / 1000)
 
                 setInterval(function() {
@@ -245,6 +246,19 @@
             },
             // user defined methods, that can be called within Vue, the js, or the HTML
             methods: {
+                repaint: function() {
+                    console.log('repainting')
+                    let p = g_data[this.ID]
+                    this.position = p.pos
+                    this.in_trade = p.in_trade
+                    this.requested = p.requested
+                    this.message = p.message
+                    this.requesting = p.requesting
+                    this.accepted = p.accepted
+                    this.current_alert = p.alert
+                    this.num_players_queue = p.num_players_queue
+                    this.num_players_service = p.num_players_service
+                },
                 // emits a request. Called by a player clicking a request button
                 // single argument is the position of the requestee
                 // the position of the requester is stored in data and is already known
@@ -649,16 +663,8 @@
             g_data = event.detail.payload
 
             // updates this player's vue data
-            var p = g_data[vm.ID]
-            vm.position = p.pos
-            vm.in_trade = p.in_trade
-            vm.requested = p.requested
-            vm.message = p.message
-            vm.requesting = p.requesting
-            vm.accepted = p.accepted
-            vm.current_alert = p.alert
-            vm.num_players_queue = p.num_players_queue
-            vm.num_players_service = p.num_players_service
+            vm.repaint()
+            let p = g_data[vm.ID]
             // vm.tokens = p.tokens
 
             vm.last_event = parseInt(new Date().getTime() / 1000)
