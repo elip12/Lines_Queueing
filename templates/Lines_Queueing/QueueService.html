@@ -18,12 +18,9 @@
 {% block scripts %}
 
     <!--Import the redwood-period/channel webcomponent.-->
-    <link rel="import"
-        href="/static/otree-redwood/webcomponents/redwood-period/redwood-period.html">
-
-    <link rel="import"
-        href="/static/otree-redwood/webcomponents/redwood-channel/redwood-channel.html">
-
+    <script type="module" src="/static/otree-redwood/src/otree-constants/otree-constants.js"></script>    
+    <script type="module" src="/static/otree-redwood/src/redwood-channel/redwood-channel.js"></script>
+    <script type="module" src="/static/otree-redwood/src/redwood-period/redwood-period.js"></script>
     <script src="{% static "js/vue.js" %}"></script>
     <script type='text/javascript'>
         var g_data = {{ data | json }}
@@ -38,21 +35,6 @@
             document.getElementById('sr_time').value = new Date().toISOString()
         }
 
-        // Boilerplate that lets you access useful oTree template variables from Javascript.
-        var oTree = oTree || {};
-        (function() {
-            oTree.group = parseInt("{{ player.group.pk }}");
-            oTree.group = isNaN(oTree.group) ? null : oTree.group;
-            oTree.role = "{{ player.role }}";
-            oTree.participantCode = "{{ player.participant.code }}";
-            oTree.idInGroup = "{{ player.id_in_group }}";
-            oTree.csrfToken = "{{ csrf_token }}";
-            {% if view.is_debug %}
-            oTree.debug = true;
-            {% else %}
-            oTree.debug = false;
-            {% endif %}
-        })();
 
         // Log period start/end to the JavaScript console.
         document.querySelector("redwood-period").addEventListener('period-start', function(event) {
@@ -798,10 +780,10 @@
             height: 40px;
         }
         .btn-yes {
-            margin-left: -15px; background-color: #28b738;
+            margin-left: -15px;  width: 250%; background-color: #28b738;
         }
         .btn-no {
-            margin-left: -15px; width: 220%; background-color: #e23f36;
+            margin-left: -15px; width: 250%; background-color: #e23f36;
         }
         .otree-timer {
             display: none;
