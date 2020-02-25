@@ -19,7 +19,7 @@ data = [[
         #
         "settings": {
             "duration": 1800,
-            "swap_method": "take/Leave",
+            "swap_method": "token",
             "pay_method": "gain",
             "k": 0.8,
             "service_distribution": 1,
@@ -40,7 +40,7 @@ data = [[
 ] ]
 # data[1][1]['settings']['messaging'] = False
 data[0][1]['settings']['swap_method'] = "swap"
-data[0][2]['settings']['swap_method'] = "token"
+data[0][2]['settings']['swap_method'] = "take/Leave"
 data[0][3]['settings']['swap_method'] = "double"
 
 

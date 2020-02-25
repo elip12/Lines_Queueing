@@ -366,12 +366,15 @@ class Group(RedwoodGroup):
                         if swap_method == "swap":
                             p2["bid"] = None
 
-                        elif swap_method == 'token':
-                                
-                            #p2["bid"] = -p1["bid"]    
+                        elif swap_method == "token":
 
                             p2["tokens"] -= 1
                             p1["tokens"] += 1
+
+                            p2["bid"] = -float(p1["bid"])
+
+                        elif swap_method == "take/Leave":
+                            p2["bid"] = -float(p1["bid"])
 
                         else:
                             print("YO")

@@ -354,7 +354,13 @@
                     return vm.bid
                 },
                 toke: function() {
-                    return g_data[this.comp_pos]["tokens"]
+                    for(let p in g_data) {
+                        if (g_data.hasOwnProperty(p) && p != 'metadata') {
+                            if(g_data[p]['pos'] == this.self_pos+1) {
+                                return g_data[p]['tokens']
+                            }
+                        }
+                    }
                 }
             },
 
@@ -376,7 +382,7 @@
                     }
 
                     else if (this.swap_method == 'token') {
-                        vm.request({pos: this.comp_pos, bid: null, message: this.message})
+                        vm.request({pos: this.comp_pos, bid: Number(1), message: this.message})
                     }
 
                     // for player 1's bid, vm bid(2) will be null
@@ -672,36 +678,28 @@
             vm.current_alert = p.alert
             vm.num_players_queue = p.num_players_queue
             vm.num_players_service = p.num_players_service
-            vm.tokens = p.tokens
+            // vm.tokens = p.tokens
 
             vm.last_event = parseInt(new Date().getTime() / 1000)
             if(p.in_trade == false && p.bid != null) {
 
                 if(vm.swap_method == 'token'){
                     vm.tokens += Number(p.bid)
-                    console.log(`i have ${vm.tokens} tokens`)
+                    // console.log(`i have ${vm.tokens} tokens`)
                 }
 
                 else {
                     vm.payoff = Number(vm.payoff) + Number(p.bid)
                 }
+                p.bid = null
+            }
 
-                //for(p in g_data) {
-                //    if (g_data.hasOwnProperty(p) && p != 'metadata') {
-
-                //    }
-                //}
-
-                g_data[p.pos]['bid'] = null
-                if(p.alert == "Your swap request has been accepted") {
-                    g_data[p.pos+1]['bid'] = null
+            for(pp in g_data) {
+                if (g_data.hasOwnProperty(pp) && pp != 'metadata') {
+                    if(g_data[pp]['in_trade'] == false && g_data[pp]['bid'] != null) {
+                        g_data[pp]['bid'] = null
+                    }
                 }
-                else if(p.alert == "You have accepted a swap request") {
-                    g_data[p.pos-1]['bid'] = null
-                }
-                vm.update()
-                //p.bid = null
-                //vm.bid = null
             }
             console.log(g_data)
             vm.bid = p.bid
