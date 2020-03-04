@@ -21,7 +21,7 @@ data = [[
             "duration": 1800,
             "swap_method": "token",
             "pay_method": "gain",
-            "k": 0.8,
+            "k": [0.1,0.1,0.1,0.7],
             "service_distribution": 1,
             "discrete": True,
             "messaging": False,
@@ -126,10 +126,13 @@ def export_data():
 
                 vals = [random.randrange(sd) + 1 for p in players]
                 vals = [v / sum(vals) for v in vals]
-                vals = [round(v * k * t) for v in vals]
+                # vals = [round(v * k * t) for v in vals]
+                # vals = [round(vals[i] * k[i] * t) for i in range(len(k))]
+                vals = [round(k[i] * t) for i in range(len(k))]
+                print(vals)
                 positions = [n for n in range(1, len(period["players"]) + 1)]
                 for k, _ in enumerate(players):
-                    data[i][j]["players"][k]["service_time"] = vals[k]
+                    data[i][j]["players"][k]["service_time"] = vals
                     data[i][j]["players"][k]["start_pos"] = positions[k]
 
     print("exported data is")
