@@ -101,11 +101,6 @@ class Player(BasePlayer):
     # money player leaves the round with
     round_payoff = models.FloatField()
 
-    # data holding information on the entire group's trades
-    # including bid prices, which are chosen each trade
-    metadata = models.LongStringField()
-    allMetadata = models.LongStringField()
-
     # discrete and messaging enabled/disabled
     discrete = models.BooleanField()
     messaging = models.BooleanField()
@@ -284,6 +279,7 @@ class Group(RedwoodGroup):
             # someone has initiated a trade request
             elif not p1["in_trade"] and p1["requesting"] != None:
                 metadata = {}
+                metadata["group_id"] = group_id
                 metadata["round"] = self.round_number
                 metadata["swap_method"] = swap_method
                 metadata["requester_id"] = p1["id"]
