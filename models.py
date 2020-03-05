@@ -12,6 +12,7 @@ from . import config as config_py
 import random
 import json
 from datetime import datetime
+import pandas as pd
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 
@@ -412,6 +413,10 @@ class Group(RedwoodGroup):
 
 
 class Subsession(BaseSubsession):
+    def write_metadata():
+        df = pd.DataFrame(self.session.vars["metadata"]).T
+        df.to_csv(self.session.vars["data_fname"])
+    
     def creating_session(self):
         if self.round_number == 1:
 
