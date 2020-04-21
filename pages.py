@@ -35,7 +35,6 @@ class QueueService(Page):
         "service_time",
         "pay_rate",
         "round_payoff",
-        "metadata",
         "endowment",
         "swap_method",
         "pay_method",
@@ -119,7 +118,6 @@ class BetweenPages(Page):
             "round": self.round_number,
             "startLine": displayStartLine,
             "numPlayers": len(all_players),
-            "history": self.player.metadata,
             "id": self.player.id_in_group,
             "tokens": self.player.tokens,
             "roundpayoff": self.player.round_payoff,
@@ -130,13 +128,7 @@ class BetweenPages(Page):
 
 class AfterService(WaitPage):
     def after_all_players_arrive(self):
-        allData = {}
-        for p in self.group.get_players():
-            allData[p.id_in_group] = p.metadata
-
-        for p in self.group.get_players():
-            p.allMetadata = json.dumps(allData)
-
+        pass
 
 # displays experiment results. Has no specific data set yet.
 class Results(Page):
