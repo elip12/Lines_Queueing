@@ -257,6 +257,8 @@
                     this.current_alert = p.alert
                     this.num_players_queue = p.num_players_queue
                     this.num_players_service = p.num_players_service
+                    // make buttons unclickable after page reloads
+                    this.last_event = this.last_event + 0
                 },
                 // emits a request. Called by a player clicking a request button
                 // single argument is the position of the requestee
@@ -279,7 +281,6 @@
                 },
                 // respond to a request: called when a player clicks a yes/no button
                 respond: function(yesno) {
-                    // XXX
                     g_data[this.ID]['accepted'] = yesno
                     this.update()
                 },
@@ -656,8 +657,6 @@
             //console.log(event.detail.channel) // "swap"
             //console.log(new Date().getTime()) // timestamp
             // console.trace(event.detail.payload) // test_order
-
-            //console.log(event.detail.payload['metadata']) // previous trade records
 
             g_data = event.detail.payload
 
