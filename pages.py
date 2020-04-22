@@ -1,7 +1,7 @@
 from ._builtin import Page, WaitPage
 from .models import Constants
 import json
-
+from datetime import datetime
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 """
@@ -51,6 +51,8 @@ class QueueService(Page):
         g_index = self.participant.vars[self.round_number]['group']
         if self.group.cache is None:
             g_data = self.session.vars[self.round_number][g_index]
+            g_data['start_time'] = int(datetime.now().strftime('%s')) + 1
+            self.group.cache = g_data
         else:
             g_data = self.group.cache
         self.player.discrete = Constants.config[g_index][self.round_number -
