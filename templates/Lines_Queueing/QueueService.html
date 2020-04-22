@@ -463,8 +463,8 @@
 <div v-if="num_players >= comp_pos">
     <div class="row padded-row">
         <svg class="svg">
-            <circle cx="40" cy="60" r="35" v-if="comp_pos != self_pos"/>
-            <circle cx="40" cy="60" r="35" style="fill: #545353;"
+            <ellipse cx="40" cy="60" ry="35" rx="25" v-if="comp_pos != self_pos"/>
+            <ellipse cx="40" cy="60" ry="35" rx="25" style="fill: #545353;"
                 v-if="comp_pos == self_pos"/>
             <text v-bind:x="35 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
                { comp_pos }
@@ -640,9 +640,9 @@
             template: `
                 <div class="col-4" v-if="num_players >= -comp_pos + 1">
                     <svg class="svg-s">
-                        <circle cx="40" cy="60" r="35" style="fill: #545353;"
+                        <ellipse cx="40" cy="60" ry="35" rx="25" style="fill: #545353;"
                             v-if="comp_pos == self_pos"/>
-                        <circle cx="40" cy="60" r="35" v-if="comp_pos != self_pos"/>
+                        <ellipse cx="40" cy="60" ry="35" rx="25" v-if="comp_pos != self_pos"/>
                     </svg>
                 </div>
             `
@@ -790,7 +790,7 @@
         .otree-timer {
             display: none;
         }
-        circle {
+        ellipse {
             stroke: #545353;
             stroke-width: 3px;
             fill: none;
@@ -828,7 +828,6 @@
         <input type="hidden" name="pay_method" v-model="pay_method"/>
         <input type="hidden" name="waiting_time" v-model="waiting_time"/>
         <input type="hidden" name="end_pos" v-model="end_pos"/>
-        <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
         <input type="hidden" name="tokens" v-model="tokens"/>
 
 
@@ -1007,8 +1006,8 @@
                         <div v-if="num_players_service > 0 && num_players_service <= num_players">
                             <div class="row padded-row">
                                 <svg class="svg">
-                                    <circle cx="30" cy="60" r="35" v-if="position != 0"/>
-                                    <circle cx="30" cy="60" r="35" style="fill: #545353;"
+                                    <ellipse cx="30" cy="60" ry="35" rx="25" v-if="position != 0"/>
+                                    <ellipse cx="30" cy="60" ry="35" rx="25" style="fill: #545353;"
                                         v-if="position == 0"/>
                                     <text v-bind:x="21" y="135"
                                         v-if="position == 0">
