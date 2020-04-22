@@ -21,13 +21,23 @@
     <script type="module" src="/static/otree-redwood/src/otree-constants/otree-constants.js"></script>    
     <script type="module" src="/static/otree-redwood/src/redwood-channel/redwood-channel.js"></script>
     <script type="module" src="/static/otree-redwood/src/redwood-period/redwood-period.js"></script>
+    <link href="https://unpkg.com/nprogress@0.2.0/nprogress.css" rel="stylesheet" />
+    <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
     <script src="{% static "js/vue.js" %}"></script>
     <script type='text/javascript'>
         var g_data = {{ data | json }}
         // time when user enters the queue room
         // because there is a wait page, this is when all players simultaneously arrive
         window.onload = function () {
+            // simple loading screen so clients don't display the vue machine loading
+            document.getElementById('app').style.visibility = 'hidden'
             document.getElementById('arrive_time').value = new Date().toISOString()
+            NProgress.start()
+            setTimeout(() => {
+                document.getElementById('loading').style.visibility = 'hidden'
+                document.getElementById('app').style.visibility = 'visible'
+                NProgress.done()
+                }, 1100)
         }
 
         // time when a player leaves the service room
@@ -47,7 +57,7 @@
         /*
             Vue machine
             Holds all data for a single player.
-            Because of a property (design flaw) of Vue that objects stored in vm.data are promises,
+            Because of a property of Vue that objects stored in vm.data are promises,
             to my knowledge you cannot modify objects stored in data (this does not apply
             to primitives). For this reason, g_data, which is the object representing the event that
             gets transmitted over websockets to the server, is stored outside Vue.
@@ -125,16 +135,17 @@
                         8: true,
                         9: true,
                         10: true,
+                        11: true,
+                        12: true,
                     },
-                    metadata: null,
                     channel : document.getElementById('channel'),
 
                 }
             },
             // Vue lifecycle hook: this function gets called when the Vue instance is created
             created: function() {
-                this.start_time = parseInt(new Date().getTime() / 1000)
-
+                this.repaint()
+                this.start_time = parseInt(g_data['start_time'])
                 setInterval(function() {
                     this.now = parseInt(new Date().getTime() / 1000)
                 }.bind(this), 999) // assume a 1 ms delay for all information transit and logic
@@ -245,6 +256,21 @@
             },
             // user defined methods, that can be called within Vue, the js, or the HTML
             methods: {
+                repaint: function() {
+                    console.log('repainting')
+                    let p = g_data[this.ID]
+                    this.position = p.pos
+                    this.in_trade = p.in_trade
+                    this.requested = p.requested
+                    this.message = p.message
+                    this.requesting = p.requesting
+                    this.accepted = p.accepted
+                    this.current_alert = p.alert
+                    this.num_players_queue = p.num_players_queue
+                    this.num_players_service = p.num_players_service
+                    // make buttons unclickable after page reloads
+                    this.last_event = this.last_event + 0
+                },
                 // emits a request. Called by a player clicking a request button
                 // single argument is the position of the requestee
                 // the position of the requester is stored in data and is already known
@@ -266,7 +292,6 @@
                 },
                 // respond to a request: called when a player clicks a yes/no button
                 respond: function(yesno) {
-                    // XXX
                     g_data[this.ID]['accepted'] = yesno
                     this.update()
                 },
@@ -449,8 +474,8 @@
 <div v-if="num_players >= comp_pos">
     <div class="row padded-row">
         <svg class="svg">
-            <circle cx="40" cy="60" r="35" v-if="comp_pos != self_pos"/>
-            <circle cx="40" cy="60" r="35" style="fill: #545353;"
+            <ellipse cx="40" cy="60" ry="35" rx="25" v-if="comp_pos != self_pos"/>
+            <ellipse cx="40" cy="60" ry="35" rx="25" style="fill: #545353;"
                 v-if="comp_pos == self_pos"/>
             <text v-bind:x="35 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
                { comp_pos }
@@ -626,9 +651,9 @@
             template: `
                 <div class="col-4" v-if="num_players >= -comp_pos + 1">
                     <svg class="svg-s">
-                        <circle cx="40" cy="60" r="35" style="fill: #545353;"
+                        <ellipse cx="40" cy="60" ry="35" rx="25" style="fill: #545353;"
                             v-if="comp_pos == self_pos"/>
-                        <circle cx="40" cy="60" r="35" v-if="comp_pos != self_pos"/>
+                        <ellipse cx="40" cy="60" ry="35" rx="25" v-if="comp_pos != self_pos"/>
                     </svg>
                 </div>
             `
@@ -644,21 +669,11 @@
             //console.log(new Date().getTime()) // timestamp
             // console.trace(event.detail.payload) // test_order
 
-            //console.log(event.detail.payload['metadata']) // previous trade records
-
             g_data = event.detail.payload
 
             // updates this player's vue data
-            var p = g_data[vm.ID]
-            vm.position = p.pos
-            vm.in_trade = p.in_trade
-            vm.requested = p.requested
-            vm.message = p.message
-            vm.requesting = p.requesting
-            vm.accepted = p.accepted
-            vm.current_alert = p.alert
-            vm.num_players_queue = p.num_players_queue
-            vm.num_players_service = p.num_players_service
+            vm.repaint()
+            let p = g_data[vm.ID]
             // vm.tokens = p.tokens
 
             vm.last_event = parseInt(new Date().getTime() / 1000)
@@ -786,7 +801,7 @@
         .otree-timer {
             display: none;
         }
-        circle {
+        ellipse {
             stroke: #545353;
             stroke-width: 3px;
             fill: none;
@@ -812,8 +827,11 @@
         id="channel"
         channel="swap">
     </redwood-channel>
-
-    <div id="app">
+    
+    <h1 id="loading">
+        Loading...
+    <h1/>
+    <div id="app" style="visibility: hidden;">
         <!-- hidden inputs that submit all required data to server at end of round -->
         <input type="hidden" name="service_time" v-model="service_time"/>
         <input type="hidden" name="pay_rate" v-model="pay_rate"/>
@@ -824,7 +842,6 @@
         <input type="hidden" name="pay_method" v-model="pay_method"/>
         <input type="hidden" name="waiting_time" v-model="waiting_time"/>
         <input type="hidden" name="end_pos" v-model="end_pos"/>
-        <input type="hidden" name="metadata" v-model="JSON.stringify(metadata)"/>
         <input type="hidden" name="tokens" v-model="tokens"/>
 
 
@@ -1003,8 +1020,8 @@
                         <div v-if="num_players_service > 0 && num_players_service <= num_players">
                             <div class="row padded-row">
                                 <svg class="svg">
-                                    <circle cx="30" cy="60" r="35" v-if="position != 0"/>
-                                    <circle cx="30" cy="60" r="35" style="fill: #545353;"
+                                    <ellipse cx="30" cy="60" ry="35" rx="25" v-if="position != 0"/>
+                                    <ellipse cx="30" cy="60" ry="35" rx="25" style="fill: #545353;"
                                         v-if="position == 0"/>
                                     <text v-bind:x="21" y="135"
                                         v-if="position == 0">
