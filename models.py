@@ -12,7 +12,7 @@ from . import config as config_py
 import random
 import json
 from datetime import datetime
-import pandas as pd
+from collections import OrderedDict
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 
@@ -30,6 +30,7 @@ class Constants(BaseConstants):
     config = config_py.export_data()
     print("CONFIG EXPORTED")
     num_rounds = len(config[0])
+    print("NUM_ROUNDS:", num_rounds)
     num_players = sum([len(group[0]["players"]) for group in config])
     num_players = len(config[0][0]["players"])
 
@@ -150,6 +151,27 @@ class Group(RedwoodGroup):
             queue[pp["pos"]] = pp["id"]
         return [queue.get(k) for k in sorted(queue)]
 
+    def new_metadata(self, g_index, requester_id, requestee_id, swap_method):
+        m = OrderedDict()
+        m['subsession_id'] = self.subsession_id
+        m['round'] = self.round_number
+        m['group_id'] = g_index
+        m['requester_id'] = requester_id
+        m['requester_pos_init'] = 'N/A'
+        m['requester_pos_final'] = 'N/A'
+        m['requester_bid'] = 'N/A'
+        m['requestee_id'] = requestee_id
+        m['requestee_pos_init'] = 'N/A'
+        m['requestee_pos_final'] = 'N/A'
+        m['requestee_bid'] = 'N/A'
+        m['request_timestamp'] = 'N/A'
+        m['response_timestamp'] = 'N/A'
+        m['swap_method'] = swap_method
+        m['status'] = 'N/A'
+        m['message'] = 'N/A'
+        m['transaction_price'] = 'N/A'
+        return m
+
     """
         On swap event: this is a method defined by redwood. It is called when channel.send() is
         called in the javascript. That happens when
@@ -204,7 +226,6 @@ class Group(RedwoodGroup):
     """
 
     def _on_swap_event(self, event=None, **kwargs):
-
         # updates states of all players involved in the most recent event that triggered this
         # method call
         for p in self.get_players():
@@ -246,7 +267,8 @@ class Group(RedwoodGroup):
                     if p1["in_trade"]:
                         p2_id = str(p1["requested"])
                         p2 = event.value[p2_id]
-                        metadata = self.session.vars["metadata_requests"][p2["last_trade_request"]]
+                        metadata = self.new_metadata(g_index, p2['id'], p1['id'], swap_method)
+                        metadata['request_timestamp'] = p2["last_trade_request"]
 
                         p1["in_trade"] = False
                         p2["in_trade"] = False
@@ -262,8 +284,8 @@ class Group(RedwoodGroup):
                         p2["last_trade_request"] = None
                         event.value[p2_id] = p2
                         event.value[str(p.id_in_group)] = p1
-                        metadata["queue"] = self.queue_state(event.value)
-                        self.session.vars["metadata"][timestamp] = metadata
+                        #metadata["queue"] = self.queue_state(event.value)
+                        self.subsession.dump_metadata(metadata)
                 # service_other
                 elif p1["pos"] > 0:
                     # this is the only case I know of where you can get the same alert twice in a row (except none)
@@ -279,16 +301,13 @@ class Group(RedwoodGroup):
 
             # someone has initiated a trade request
             elif not p1["in_trade"] and p1["requesting"] != None:
-                metadata = {}
-                metadata["group_id"] = group_id
-                metadata["round"] = self.round_number
-                metadata["swap_method"] = swap_method
-                metadata["requester_id"] = p1["id"]
+                p2 = event.value[str(p1["requesting"])]
+                metadata = self.new_metadata(g_index, p1['id'], p2['id'], swap_method)
                 metadata["requester_pos_init"] = p1["pos"]
+                metadata['requestee_pos_init'] = p2['pos']
                 timestamp = p1["last_trade_request"]
                 metadata["request_timestamp"] = timestamp
                 if swap_method == "cut":
-                    p2 = event.value[str(p1["requesting"])]
                     temp = p2["pos"]
                     for i in event.value:
                         if i != "metadata" and i != str(p.id_in_group):
@@ -303,19 +322,17 @@ class Group(RedwoodGroup):
 
                     p1["pos"] = temp
                     p1["alert"] = Constants.alert_messages["cutting"]
-                    metadata["requester_pos_final"] = p1["pos"] 
+                    metadata["requester_pos_final"] = p1["pos"]
+                    metadata['requestee_pos_final'] = p2['pos']
                     metadata["status"] = "cut"
                     p1["requesting"] = None
                     p1["last_trade_request"] = None
                     event.value[str(p.id_in_group)] = p1
-                    self.session.vars["metadata"][timestamp] = metadata
+                    self.subsession.dump_metadata(metadata)
 
                 else:
-                    p2 = event.value[str(p1["requesting"])]
                     # requesting_clean
                     if not p2["in_trade"]:
-                        metadata["requestee_pos_init"] = p2["pos"]
-                        metadata["requestee_id"] = p2["id"]
                         print("CORRECT ")
                         message = p1.get("message")
                         print(message)
@@ -327,12 +344,11 @@ class Group(RedwoodGroup):
                         p1["alert"] = Constants.alert_messages["requesting"]
                         p2["alert"] = Constants.alert_messages["requested"]
                         event.value[str(p1["requesting"])] = p2
-                        self.session.vars["metadata_requesting"][timestamp] = metadata
+                        self.subsession.dump_metadata(metadata)
                     # requesting_dirty; the js should prevent the logic from ever reaching this
                     else:
                         p1["requesting"] = None
                         p1["alert"] = Constants.alert_messages["unv_other"]
-                
 
             # someone has responded to a trade request
             elif p1["in_trade"] and p1["requested"] != None:
@@ -340,8 +356,9 @@ class Group(RedwoodGroup):
 
                     p2_id = str(p1["requested"])
                     p2 = event.value[p2_id]
-                    metadata = self.session.vars["metadata_requests"][p2["last_trade_request"]]
-                    timestamp = p1["last_trade_request"]
+                    metadata = self.new_metadata(g_index, p2_id, p1['id'], swap_method)
+                    metadata['request_timestamp'] = p2["last_trade_request"]
+                    timestamp = datetime.now().strftime("%s")
                     metadata["response_timestamp"] = timestamp
 
                     # declining
@@ -397,37 +414,67 @@ class Group(RedwoodGroup):
 
                     metadata["requester_pos_final"] = p2["pos"]
                     metadata["requestee_pos_final"] = p1["pos"]
-                    metadata["message"] = p1.get("message")
+                    message = p1.get("message", 'N/A')
+                    if message == '':
+                        message = 'N/A'
+                    metadata['message'] = message
                     metadata["requester_bid"] = p2["bid"]
                     metadata["requestee_bid"] = p1["bid"]
-                    metadata["transaction_price"] = p1["average_bid"]
+                    metadata["transaction_price"] = p1.get("average_bid", 'N/A')
                     p2["last_trade_request"] = None
                     event.value[p2_id] = p2
                     event.value[str(p.id_in_group)] = p1
-                    self.session.vars["metadata"][timestamp] = metadata
+                    self.subsession.dump_metadata(metadata)
 
             event.value[str(p.id_in_group)] = p1  # partially redundant
-
+        
         # broadcast the updated data out to all subjects
         self.send("swap", event.value)
 
-
 class Subsession(BaseSubsession):
-    def write_metadata():
-        df = pd.DataFrame(self.session.vars["metadata"]).T
-        df.to_csv(self.session.vars["data_fname"])
+    
+    def dump_metadata(self, metadata=None):
+        if metadata == None:
+            s = ','.join([
+                'subsession_id',
+                'round',
+                'group_id',
+                'requester_id',
+                'requester_pos_init',
+                'requester_pos_final',
+                'requester_bid',
+                'requestee_id',
+                'requestee_pos_init',
+                'requestee_pos_final',
+                'requestee_bid',
+                'request_timestamp',
+                'response_timestamp',
+                'swap_method',
+                'status',
+                'message',
+                'transaction_price',
+            ])
+        else:
+            strvals = (str(e) for e in metadata.values())
+            s = ','.join(strvals)
+        fname = self.session.vars['data_fname'] + '_metadata.csv'
+        with open(fname, 'a+') as f:
+            f.write(s + '\n')
+
     
     def creating_session(self):
         if self.round_number == 1:
 
-            current_date = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
-            data_fname = f'Lines_Queueing_{current_date}.csv'
+            data_fname = f'Lines_Queueing/data/lines_queueing_{self.session.code}'
             self.session.vars["metadata"] = {}
             self.session.vars["metadata_requests"] = {}
             self.session.vars["data_fname"] = data_fname
 
             self.session.vars["pr"] = random.randrange(
                 Constants.num_rounds) + 1
+
+            # just dump header
+            self.dump_metadata()
 
         self.group_randomly()
 

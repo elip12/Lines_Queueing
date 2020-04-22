@@ -136,9 +136,7 @@ class Results(Page):
     form_fields = ["time_Results"]
 
     def vars_for_template(self):
-        self.subsession.write_metadata() # write metadata to file
         return {}
-        #return {"data": self.player.allMetadata}
 
     def is_displayed(self):
         return self.round_number == Constants.num_rounds
