@@ -30,12 +30,7 @@ class Constants(BaseConstants):
     num_rounds = len(config[0])
     num_players = sum([len(group[0]["players"]) for group in config])
     num_players = len(config[0][0]["players"])
-
-    print("NUM PLAYERS: ", num_players)
-
     players_per_group = len(config[0][0]["players"])
-
-    print("PLAYERS PER GROUP: ", players_per_group)
 
     #players_per_group = 4
 
@@ -143,8 +138,8 @@ class Group(RedwoodGroup):
     # first person to have entered the service room, and the last element in the list is the person
     # in the back of the queue.
     def queue_state(self, data):
-        print("data before sorting queue is:")
-        print(data)
+        # print("data before sorting queue is:")
+        # print(data)
 
         queue = {}
         for p in self.get_players():
@@ -317,7 +312,12 @@ class Group(RedwoodGroup):
                         p1["in_trade"] = True
                         p2["in_trade"] = True
                         p2["requested"] = p1["id"]
-                        p2["bid"] = p1["bid"]
+
+                        if swap_method == 'double':
+                            p2["other_bid"] = p1["bid"]
+                        else:
+                            p2["bid"] = p1["bid"]
+
                         p2["message"] = message
                         p1["alert"] = Constants.alert_messages["requesting"]
                         p2["alert"] = Constants.alert_messages["requested"]
@@ -382,7 +382,11 @@ class Group(RedwoodGroup):
                             print("YO")
                             print(p2["bid"])
                             print(p1["bid"])
-                            p2["bid"] = -float(p1["bid"])
+                            p2["other_bid"] = p1["bid"]
+                            av_bid = ( float(p1["bid"]) + float(p2["bid"]) ) / 2
+                            p2["average_bid"] = -av_bid
+                            p1["average_bid"] = av_bid
+                            # p2["bid"] = -float(p1["bid"])
 
                         # p2['bid'] = -float(p1['bid'])
                         metadata["status"] = "accepted"
@@ -410,7 +414,7 @@ class Subsession(BaseSubsession):
             self.session.vars["pr"] = random.randrange(
                 Constants.num_rounds) + 1
 
-        self.group_randomly()
+        # self.group_randomly()
 
         # since there is no group.vars, all group data is stored in session.vars,
 
@@ -441,6 +445,7 @@ class Subsession(BaseSubsession):
                     p.id_in_group - 1
                 ]["endowment"]
                 p.participant.vars[self.round_number]["group"] = g_index
+                p.participant.vars[self.round_number]["carry_tokens"] = 0
                 p_data = {
                     "id": p.id_in_group,
                     "pos": p.participant.vars[self.round_number]["start_pos"],
@@ -449,6 +454,8 @@ class Subsession(BaseSubsession):
                     "requested": None,
                     "requesting": None,
                     "bid": None,
+                    "other_bid": None,
+                    "average_bid": None,
                     "accepted": 2,
                     "alert": Constants.alert_messages["none"],
                     "num_players_queue": Constants.num_players,

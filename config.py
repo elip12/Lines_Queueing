@@ -18,14 +18,15 @@ data = [[
     {  # Type 1: double, no communication, 8 players
         #
         "settings": {
-            "duration": 1800,
+            "duration": 60,
             "swap_method": "token",
             "pay_method": "gain",
-            "k": [0.1,0.1,0.1,0.7],
+            "k": [1-(3/60),(1/60),(1/60),(1/60)],
             "service_distribution": 1,
             "discrete": True,
             "messaging": False,
             #"tokenSwap": True,
+            "block": 1,
         },
         "players": [
             {"pay_rate": 4, "endowment": 4, "c": random.random()},
@@ -129,7 +130,7 @@ def export_data():
                 # vals = [round(v * k * t) for v in vals]
                 # vals = [round(vals[i] * k[i] * t) for i in range(len(k))]
                 vals = [round(k[i] * t) for i in range(len(k))]
-                print(vals)
+                # print(vals)
                 positions = [n for n in range(1, len(period["players"]) + 1)]
                 for k, _ in enumerate(players):
                     data[i][j]["players"][k]["service_time"] = vals

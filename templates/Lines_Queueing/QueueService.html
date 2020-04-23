@@ -95,6 +95,8 @@
                     last_event: null,
                     waiting_time: 0,
                     bid: null,
+                    other_bid: null,
+                    average_bid: null,
 
                     //group data
                     service_color: '#545353',
@@ -392,12 +394,14 @@
                                     //1
                                     console.log("this.bid before :" + this.bid)
 
-                                    avg_bid = (this.bid + vm.bid) / 2;
+                                    // avg_bid = (this.bid + vm.bid) / 2;
 
-                                    console.log("vm bid is " + vm.bid)
-                                    console.log("this bid is " + this.bid)
-                                    console.log("avg bid is now: " + avg_bid)
-                                    this.bid = avg_bid
+                                    // console.log("vm bid is " + vm.bid)
+                                    // console.log("this bid is " + this.bid)
+                                    // console.log("avg bid is now: " + avg_bid)
+                                    // this.bid = avg_bid
+
+                                    g_data[vm.ID]['bid'] = this.bid
 
                                     //player 1 bids
                                     //stored in vm
@@ -410,7 +414,7 @@
                                     //updates the requester's player bid
                                     //this.comp_pos is the person further in the queue
                                     //so the requester will always be behind, position: this.comp_pos-1
-                                    g_data[String(Number(this.comp_pos)-1)]['bid'] = this.bid
+                                    // g_data[String(Number(this.comp_pos)-1)]['bid'] = this.bid
 
                                     //vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
                                     vm.respond(1)
@@ -468,11 +472,11 @@
     <div class="row btn-row" v-if="swap_method == 'swap'">
 
         <button type="button" class="btn btn-large"
-        style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+        style="margin-left: 18px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
         v-on:click="send_click">Swap</button>
 
         <button type="button" class="btn btn-large"
-            style="margin-left: 22px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
+            style="margin-left: 18px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
             disabled>Swap</button>
 
         <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed && messaging"  />
@@ -593,7 +597,7 @@
             <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  />
 
          <button type="button" class="btn btn-large"
-            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            style="margin-left: 18px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
             v-on:click="send_click">Send</button>
 
         <p v-if="comp_pos == self_pos + 1 && requested != null"
@@ -669,6 +673,10 @@
                     // console.log(`i have ${vm.tokens} tokens`)
                 }
 
+                else if(vm.swap_method == 'double') { 
+                    vm.payoff = Number(vm.payoff) + Number(p.average_bid)
+                }
+
                 else {
                     vm.payoff = Number(vm.payoff) + Number(p.bid)
                 }
@@ -677,13 +685,20 @@
 
             for(pp in g_data) {
                 if (g_data.hasOwnProperty(pp) && pp != 'metadata') {
-                    if(g_data[pp]['in_trade'] == false && g_data[pp]['bid'] != null) {
+                    if(g_data[pp]['in_trade'] == false && ( g_data[pp]['bid'] != null || g_data[pp]['other_bid'] != null || g_data[pp]['average_bid'] != null ) ) {
                         g_data[pp]['bid'] = null
+                        g_data[pp]['other_bid'] = null
+                        g_data[pp]['average_bid'] = null
                     }
                 }
             }
             console.log(g_data)
-            vm.bid = p.bid
+            if(vm.swap_method == 'double') {
+                vm.bid = p.other_bid
+            }
+            else {
+                vm.bid = p.bid
+            }
             vm.metadata = g_data['metadata']
             //now, with reactivity, all of these fields should update in the html
             //need to do some logic that updates the actual html from here
