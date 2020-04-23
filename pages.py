@@ -1,7 +1,7 @@
 from ._builtin import Page, WaitPage
 from .models import Constants
 import json
-
+from datetime import datetime
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 """
@@ -35,7 +35,6 @@ class QueueService(Page):
         'service_time',
         'pay_rate',
         'round_payoff',
-        'metadata',
         'endowment',
         'swap_method',
         'pay_method',
@@ -50,7 +49,12 @@ class QueueService(Page):
 
     def vars_for_template(self):
         g_index = self.participant.vars[self.round_number]['group']
-        self.group.groupTrades = 'congoman'
+        if self.group.cache is None:
+            g_data = self.session.vars[self.round_number][g_index]
+            g_data['start_time'] = int(datetime.now().strftime('%s')) + 1
+            self.group.cache = g_data
+        else:
+            g_data = self.group.cache
         self.player.discrete = Constants.config[g_index][self.round_number -
                                                          1]['settings']['discrete']
         self.player.messaging = Constants.config[g_index][self.round_number -
@@ -61,14 +65,13 @@ class QueueService(Page):
             'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'duration'
             ],
-            'groupTrades': self.group.groupTrades,
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'c_': self.participant.vars[self.round_number]['c'],
             'service_time_': self.participant.vars[self.round_number]['service_time'],
             'start_pos_': self.participant.vars[self.round_number]['start_pos'],
             'round_': self.round_number,
             'num_players_': Constants.num_players,
-            'data': self.session.vars[self.round_number][g_index],
+            'data': g_data,
             'raw': self.session.vars,
             'id': self.player.id_in_group,
             'swap_method_': Constants.config[g_index][self.round_number - 1][
@@ -107,19 +110,18 @@ class BetweenPages(Page):
 
         """
 
-        print("start line is: ", str(startLine))
+        print('start line is: ', str(startLine))
 
         for i in range(len(startLine)):
             displayStartLine.append(startLine[str(i + 1)])
 
-        print("displaystartline is: ", displayStartLine)
+        print('displaystartline is: ', displayStartLine)
         """
 
         return {
             'round': self.round_number,
             'startLine': displayStartLine,
             'numPlayers': len(all_players),
-            'history': self.player.metadata,
             'id': self.player.id_in_group,
             'tokens': self.player.tokens,
             'roundpayoff': self.player.round_payoff,
@@ -130,13 +132,7 @@ class BetweenPages(Page):
 
 class AfterService(WaitPage):
     def after_all_players_arrive(self):
-        allData = {}
-        for p in self.group.get_players():
-            allData[p.id_in_group] = p.metadata
-
-        for p in self.group.get_players():
-            p.allMetadata = json.dumps(allData)
-
+        self.group.cache = 'N/A'
 
 # displays experiment results. Has no specific data set yet.
 class Results(Page):
@@ -144,7 +140,7 @@ class Results(Page):
     form_fields = ['time_Results']
 
     def vars_for_template(self):
-        return {'data': self.player.allMetadata}
+        return {}
 
     def is_displayed(self):
         return self.round_number == Constants.num_rounds

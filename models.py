@@ -11,6 +11,9 @@ from otree_redwood.models import Group as RedwoodGroup
 from . import config as config_py
 import random
 import json
+from datetime import datetime
+from collections import OrderedDict
+from jsonfield import JSONField
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 
@@ -28,9 +31,15 @@ class Constants(BaseConstants):
     config = config_py.export_data()
     print('CONFIG EXPORTED')
     num_rounds = len(config[0])
+    print('NUM_ROUNDS:', num_rounds)
     num_players = sum([len(group[0]['players']) for group in config])
     num_players = len(config[0][0]['players'])
+
+    print('NUM PLAYERS: ', num_players)
+
     players_per_group = len(config[0][0]['players'])
+
+    print('PLAYERS PER GROUP: ', players_per_group)
 
     #players_per_group = 4
 
@@ -53,6 +62,7 @@ class Constants(BaseConstants):
         'bad_bid': 'Your bid must be between 0 and your current payoff',
         'none': '',
     }
+
 
 
 class Player(BasePlayer):
@@ -94,11 +104,6 @@ class Player(BasePlayer):
     # money player leaves the round with
     round_payoff = models.FloatField()
 
-    # data holding information on the entire group's trades
-    # including bid prices, which are chosen each trade
-    metadata = models.LongStringField()
-    allMetadata = models.LongStringField()
-
     # discrete and messaging enabled/disabled
     discrete = models.BooleanField()
     messaging = models.BooleanField()
@@ -120,7 +125,7 @@ class Player(BasePlayer):
 
 class Group(RedwoodGroup):
     
-    groupTrades = models.LongStringField()
+    cache = JSONField(null=True)
 
     # needed for otree redwood; this should replace the need for the get_timeout_seconds method
     # in pages.QueueService, but for some reason does has no effect. This is essentially a wrapper
@@ -138,14 +143,35 @@ class Group(RedwoodGroup):
     # first person to have entered the service room, and the last element in the list is the person
     # in the back of the queue.
     def queue_state(self, data):
-        # print('data before sorting queue is:')
-        # print(data)
+        print('data before sorting queue is:')
+        print(data)
 
         queue = {}
         for p in self.get_players():
             pp = data[str(p.id_in_group)]
             queue[pp['pos']] = pp['id']
         return [queue.get(k) for k in sorted(queue)]
+
+    def new_metadata(self, g_index, requester_id, requestee_id, swap_method):
+        m = OrderedDict()
+        m['subsession_id'] = self.subsession_id
+        m['round'] = self.round_number
+        m['group_id'] = g_index
+        m['requester_id'] = requester_id
+        m['requester_pos_init'] = 'N/A'
+        m['requester_pos_final'] = 'N/A'
+        m['requester_bid'] = 'N/A'
+        m['requestee_id'] = requestee_id
+        m['requestee_pos_init'] = 'N/A'
+        m['requestee_pos_final'] = 'N/A'
+        m['requestee_bid'] = 'N/A'
+        m['request_timestamp'] = 'N/A'
+        m['response_timestamp'] = 'N/A'
+        m['swap_method'] = swap_method
+        m['status'] = 'N/A'
+        m['message'] = 'N/A'
+        m['transaction_price'] = 'N/A'
+        return m
 
     """
         On swap event: this is a method defined by redwood. It is called when channel.send() is
@@ -201,7 +227,6 @@ class Group(RedwoodGroup):
     """
 
     def _on_swap_event(self, event=None, **kwargs):
-
         # updates states of all players involved in the most recent event that triggered this
         # method call
         for p in self.get_players():
@@ -243,7 +268,8 @@ class Group(RedwoodGroup):
                     if p1['in_trade']:
                         p2_id = str(p1['requested'])
                         p2 = event.value[p2_id]
-                        metadata = {}
+                        metadata = self.new_metadata(g_index, p2['id'], p1['id'], swap_method)
+                        metadata['request_timestamp'] = p2['last_trade_request']
 
                         p1['in_trade'] = False
                         p2['in_trade'] = False
@@ -252,14 +278,15 @@ class Group(RedwoodGroup):
                         p1['accepted'] = 2  # this should be unnecessary
 
                         metadata['status'] = 'cancelled'
-                        metadata['requester'] = p2['id']
-                        metadata['requestee'] = p1['id']
-                        timestamp = p2['last_trade_request']
+                        metadata['requester_pos_final'] = p2['pos']
+                        metadata['requestee_pos_final'] = p1['pos']
+                        timestamp = datetime.now().strftime('%s')
+                        metadata['response_timestamp'] = timestamp
                         p2['last_trade_request'] = None
                         event.value[p2_id] = p2
                         event.value[str(p.id_in_group)] = p1
-                        metadata['queue'] = self.queue_state(event.value)
-                        event.value['metadata'][timestamp] = metadata
+                        #metadata['queue'] = self.queue_state(event.value)
+                        self.subsession.dump_metadata(metadata)
                 # service_other
                 elif p1['pos'] > 0:
                     # this is the only case I know of where you can get the same alert twice in a row (except none)
@@ -275,8 +302,13 @@ class Group(RedwoodGroup):
 
             # someone has initiated a trade request
             elif not p1['in_trade'] and p1['requesting'] != None:
+                p2 = event.value[str(p1['requesting'])]
+                metadata = self.new_metadata(g_index, p1['id'], p2['id'], swap_method)
+                metadata['requester_pos_init'] = p1['pos']
+                metadata['requestee_pos_init'] = p2['pos']
+                timestamp = p1['last_trade_request']
+                metadata['request_timestamp'] = timestamp
                 if swap_method == 'cut':
-                    p2 = event.value[str(p1['requesting'])]
                     temp = p2['pos']
                     for i in event.value:
                         if i != 'metadata' and i != str(p.id_in_group):
@@ -291,19 +323,14 @@ class Group(RedwoodGroup):
 
                     p1['pos'] = temp
                     p1['alert'] = Constants.alert_messages['cutting']
-                    metadata = {}
+                    metadata['requester_pos_final'] = p1['pos']
+                    metadata['requestee_pos_final'] = p2['pos']
                     metadata['status'] = 'cut'
-                    metadata['requester'] = p1['id']
                     p1['requesting'] = None
-                    metadata['requestee'] = p2['id']
-                    timestamp = p1['last_trade_request']
                     p1['last_trade_request'] = None
                     event.value[str(p.id_in_group)] = p1
-                    metadata['queue'] = self.queue_state(event.value)
-                    event.value['metadata'][timestamp] = metadata
-
+                    self.subsession.dump_metadata(metadata)
                 else:
-                    p2 = event.value[str(p1['requesting'])]
                     # requesting_clean
                     if not p2['in_trade']:
                         print('CORRECT ')
@@ -313,6 +340,7 @@ class Group(RedwoodGroup):
                         p2['in_trade'] = True
                         p2['requested'] = p1['id']
 
+                        # reworked double auction
                         if swap_method == 'double':
                             p2['other_bid'] = p1['bid']
                         else:
@@ -322,6 +350,7 @@ class Group(RedwoodGroup):
                         p1['alert'] = Constants.alert_messages['requesting']
                         p2['alert'] = Constants.alert_messages['requested']
                         event.value[str(p1['requesting'])] = p2
+                        self.subsession.dump_metadata(metadata)
                     # requesting_dirty; the js should prevent the logic from ever reaching this
                     else:
                         p1['requesting'] = None
@@ -333,7 +362,10 @@ class Group(RedwoodGroup):
 
                     p2_id = str(p1['requested'])
                     p2 = event.value[p2_id]
-                    metadata = {}
+                    metadata = self.new_metadata(g_index, p2_id, p1['id'], swap_method)
+                    metadata['request_timestamp'] = p2['last_trade_request']
+                    timestamp = datetime.now().strftime('%s')
+                    metadata['response_timestamp'] = timestamp
 
                     # declining
                     if p1['accepted'] == 0:
@@ -346,7 +378,6 @@ class Group(RedwoodGroup):
                         p2['alert'] = Constants.alert_messages['declined']
                         p2['bid'] = None
                         p1['bid'] = None
-
                         metadata['status'] = 'declined'
 
                     # accepting
@@ -382,6 +413,8 @@ class Group(RedwoodGroup):
                             print('YO')
                             print(p2['bid'])
                             print(p1['bid'])
+
+                            # reworked double auction
                             p2['other_bid'] = p1['bid']
                             av_bid = ( float(p1['bid']) + float(p2['bid']) ) / 2
                             p2['average_bid'] = -av_bid
@@ -391,82 +424,118 @@ class Group(RedwoodGroup):
                         # p2['bid'] = -float(p1['bid'])
                         metadata['status'] = 'accepted'
 
-                    metadata['requester'] = p2['id']
-                    metadata['requestee'] = p1['id']
-                    metadata['message'] = p1.get('message')
-                    metadata['bid'] = p1['bid']
-                    timestamp = p2['last_trade_request']
+                    metadata['requester_pos_final'] = p2['pos']
+                    metadata['requestee_pos_final'] = p1['pos']
+                    message = p1.get('message', 'N/A')
+                    if message == '':
+                        message = 'N/A'
+                    metadata['message'] = message
+                    metadata['requester_bid'] = p2['bid']
+                    metadata['requestee_bid'] = p1['bid']
+                    metadata['transaction_price'] = p1.get('average_bid', 'N/A')
                     p2['last_trade_request'] = None
                     event.value[p2_id] = p2
                     event.value[str(p.id_in_group)] = p1
-                    metadata['queue'] = self.queue_state(event.value)
-                    event.value['metadata'][timestamp] = metadata
+                    self.subsession.dump_metadata(metadata)
 
             event.value[str(p.id_in_group)] = p1  # partially redundant
-
+        
         # broadcast the updated data out to all subjects
         self.send('swap', event.value)
-
+        # cache state of queue so that client pages will not reset on reload
+        self.cache = event.value
+        # manually save all updated fields to db. otree redwood thing
+        self.save()
 
 class Subsession(BaseSubsession):
+    
+    def dump_metadata(self, metadata=None):
+        if metadata == None:
+            s = ','.join([
+                'subsession_id',
+                'round',
+                'group_id',
+                'requester_id',
+                'requester_pos_init',
+                'requester_pos_final',
+                'requester_bid',
+                'requestee_id',
+                'requestee_pos_init',
+                'requestee_pos_final',
+                'requestee_bid',
+                'request_timestamp',
+                'response_timestamp',
+                'swap_method',
+                'status',
+                'message',
+                'transaction_price',
+            ])
+        else:
+            strvals = (str(e) for e in metadata.values())
+            s = ','.join(strvals)
+        fname = self.session.vars['data_fname'] + '_metadata.csv'
+        with open(fname, 'a+') as f:
+            f.write(s + '\n')
+
+    
     def creating_session(self):
         if self.round_number == 1:
+
+            data_fname = f'Lines_Queueing/data/lines_queueing_{self.session.code}'
+            self.session.vars['metadata'] = {}
+            self.session.vars['metadata_requests'] = {}
+            self.session.vars['data_fname'] = data_fname
+
             self.session.vars['pr'] = random.randrange(
                 Constants.num_rounds) + 1
 
-        # self.group_randomly()
+            # just dump header
+            self.dump_metadata()
 
-        # since there is no group.vars, all group data is stored in session.vars,
+            # since there is no group.vars, all group data is stored in session.vars,
 
-        self.session.vars[self.round_number] = [{}
-                                                for i in range(len(self.get_groups()))]
-        for g_index, g in enumerate(self.get_groups()):
-            # for i in range(Constants.num_rounds):
-            #     self.session.vars[self.round_number].append({})
+            self.session.vars[self.round_number] = [{}
+                                                    for i in range(len(self.get_groups()))]
+            for g_index, g in enumerate(self.get_groups()):
+                g_data = Constants.config[g_index][self.round_number - 1]['players']
 
-            g_data = Constants.config[g_index][self.round_number - 1]['players']
+                # sets up each player's starting values
+                for p in g.get_players():
+                    p.participant.vars[self.round_number] = {}
+                    p.participant.vars[self.round_number]['pay_rate'] = g_data[
+                        p.id_in_group - 1
+                    ]['pay_rate']
+                    p.participant.vars[self.round_number]['c'] = g_data[p.id_in_group - 1][
+                        'c'
+                    ]
+                    p.participant.vars[self.round_number]['service_time'] = g_data[
+                        p.id_in_group - 1
+                    ]['service_time']
+                    p.participant.vars[self.round_number]['start_pos'] = g_data[
+                        p.id_in_group - 1
+                    ]['start_pos']
+                    p.participant.vars[self.round_number]['endowment'] = g_data[
+                        p.id_in_group - 1
+                    ]['endowment']
+                    p.participant.vars[self.round_number]['group'] = g_index
+                    p_data = {
+                        'id': p.id_in_group,
+                        'pos': p.participant.vars[self.round_number]['start_pos'],
+                        'in_trade': False,
+                        'last_trade_request': None,
+                        'requested': None,
+                        'requesting': None,
+                        'bid': None,
+                        'accepted': 2,
+                        'alert': Constants.alert_messages['none'],
+                        'num_players_queue': Constants.num_players,
+                        'num_players_service': 0,
+                        'next': False,
+                        'tokens': 0,
+                    }
 
-            # sets up each player's starting values
-            for p in g.get_players():
-                p.participant.vars[self.round_number] = {}
-                p.participant.vars[self.round_number]['pay_rate'] = g_data[
-                    p.id_in_group - 1
-                ]['pay_rate']
-                p.participant.vars[self.round_number]['c'] = g_data[p.id_in_group - 1][
-                    'c'
-                ]
-                p.participant.vars[self.round_number]['service_time'] = g_data[
-                    p.id_in_group - 1
-                ]['service_time']
-                p.participant.vars[self.round_number]['start_pos'] = g_data[
-                    p.id_in_group - 1
-                ]['start_pos']
-                p.participant.vars[self.round_number]['endowment'] = g_data[
-                    p.id_in_group - 1
-                ]['endowment']
-                p.participant.vars[self.round_number]['group'] = g_index
-                p.participant.vars[self.round_number]['carry_tokens'] = 0
-                p_data = {
-                    'id': p.id_in_group,
-                    'pos': p.participant.vars[self.round_number]['start_pos'],
-                    'in_trade': False,
-                    'last_trade_request': None,
-                    'requested': None,
-                    'requesting': None,
-                    'bid': None,
-                    'other_bid': None,
-                    'average_bid': None,
-                    'accepted': 2,
-                    'alert': Constants.alert_messages['none'],
-                    'num_players_queue': Constants.num_players,
-                    'num_players_service': 0,
-                    'next': False,
-                    'tokens': 0,
-                }
-
-                self.session.vars[self.round_number][g_index][p.id_in_group] = p_data
-                self.session.vars[self.round_number][g_index]['metadata'] = {}
-
+                    self.session.vars[self.round_number][g_index][p.id_in_group] = p_data
+        self.group_randomly()
 
 """
 metadata structure:
