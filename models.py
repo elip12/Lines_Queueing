@@ -22,36 +22,36 @@ Notes to ask Kristian:
 
 
 class Constants(BaseConstants):
-    name_in_url = "Lines_Queueing"
+    name_in_url = 'Lines_Queueing'
     participation_fee = c(5)
 
     config = config_py.export_data()
-    print("CONFIG EXPORTED")
+    print('CONFIG EXPORTED')
     num_rounds = len(config[0])
-    num_players = sum([len(group[0]["players"]) for group in config])
-    num_players = len(config[0][0]["players"])
-    players_per_group = len(config[0][0]["players"])
+    num_players = sum([len(group[0]['players']) for group in config])
+    num_players = len(config[0][0]['players'])
+    players_per_group = len(config[0][0]['players'])
 
     #players_per_group = 4
 
     # these will be displayed to players in the UI. Defined here for consistency and
     # a central location
     alert_messages = {
-        "cutting": "You have cut the line",
-        "cutted": "Someone has cut in front of you",
-        "requested": "You have been requested to swap",
-        "tokenRequested": "You have been requested to swap, for a token",
-        "requesting": "You have requested to swap",
-        "accepted": "Your swap request has been accepted",
-        "accepting": "You have accepted a swap request",
-        "declined": "Your swap request has been declined",
-        "declining": "You have declined a swap request",
-        "unv_other": "Requestee is currently in a trade",
-        "next_self": "You have entered the service room.",
-        "next_queue": "You have advanced one position in the queue",
-        "next_queue2": "You have advanced one position in the queue ",
-        "bad_bid": "Your bid must be between 0 and your current payoff",
-        "none": "",
+        'cutting': 'You have cut the line',
+        'cutted': 'Someone has cut in front of you',
+        'requested': 'You have been requested to swap',
+        'tokenRequested': 'You have been requested to swap, for a token',
+        'requesting': 'You have requested to swap',
+        'accepted': 'Your swap request has been accepted',
+        'accepting': 'You have accepted a swap request',
+        'declined': 'Your swap request has been declined',
+        'declining': 'You have declined a swap request',
+        'unv_other': 'Requestee is currently in a trade',
+        'next_self': 'You have entered the service room.',
+        'next_queue': 'You have advanced one position in the queue',
+        'next_queue2': 'You have advanced one position in the queue ',
+        'bad_bid': 'Your bid must be between 0 and your current payoff',
+        'none': '',
     }
 
 
@@ -107,11 +107,11 @@ class Player(BasePlayer):
 
     def set_payoffs(self):
         self.payoff = self.in_round(
-            self.session.vars["pr"]).round_payoff
+            self.session.vars['pr']).round_payoff
         # self.participant.payoff += self.in_round(
-        #     self.session.vars["pr"]).round_payoff
+        #     self.session.vars['pr']).round_payoff
         # self.participant.payoff += self.payoff
-        print("in set payoffs")
+        print('in set payoffs')
         print(self.participant.payoff)
         print(self.round_payoff)
         self.participant.payoff += self.round_payoff
@@ -128,8 +128,8 @@ class Group(RedwoodGroup):
 
     def period_length(self):
         g_index = self.get_player_by_id(
-            1).participant.vars[self.round_number]["group"]
-        return Constants.config[g_index][self.round_number - 1]["settings"]["duration"]
+            1).participant.vars[self.round_number]['group']
+        return Constants.config[g_index][self.round_number - 1]['settings']['duration']
 
     # takes in the data transferred back and forth by channels,
     # and generates a list representing the queue, where each element in the list
@@ -138,13 +138,13 @@ class Group(RedwoodGroup):
     # first person to have entered the service room, and the last element in the list is the person
     # in the back of the queue.
     def queue_state(self, data):
-        # print("data before sorting queue is:")
+        # print('data before sorting queue is:')
         # print(data)
 
         queue = {}
         for p in self.get_players():
             pp = data[str(p.id_in_group)]
-            queue[pp["pos"]] = pp["id"]
+            queue[pp['pos']] = pp['id']
         return [queue.get(k) for k in sorted(queue)]
 
     """
@@ -229,189 +229,189 @@ class Group(RedwoodGroup):
 
             # gets this player's dict from the transmitted event
             p1 = event.value[str(p.id_in_group)]
-            g_index = p.participant.vars[self.round_number]["group"]
-            swap_method = Constants.config[g_index][self.round_number - 1]["settings"][
-                "swap_method"
+            g_index = p.participant.vars[self.round_number]['group']
+            swap_method = Constants.config[g_index][self.round_number - 1]['settings'][
+                'swap_method'
             ]
 
             # someone has entered the service room
-            if p1["next"] == True:
-                if p1["pos"] == 0:
+            if p1['next'] == True:
+                if p1['pos'] == 0:
                     # service_clean
-                    p1["alert"] = Constants.alert_messages["next_self"]
+                    p1['alert'] = Constants.alert_messages['next_self']
                     # service_dirty
-                    if p1["in_trade"]:
-                        p2_id = str(p1["requested"])
+                    if p1['in_trade']:
+                        p2_id = str(p1['requested'])
                         p2 = event.value[p2_id]
                         metadata = {}
 
-                        p1["in_trade"] = False
-                        p2["in_trade"] = False
-                        p1["requested"] = None
-                        p2["requesting"] = None
-                        p1["accepted"] = 2  # this should be unnecessary
+                        p1['in_trade'] = False
+                        p2['in_trade'] = False
+                        p1['requested'] = None
+                        p2['requesting'] = None
+                        p1['accepted'] = 2  # this should be unnecessary
 
-                        metadata["status"] = "cancelled"
-                        metadata["requester"] = p2["id"]
-                        metadata["requestee"] = p1["id"]
-                        timestamp = p2["last_trade_request"]
-                        p2["last_trade_request"] = None
+                        metadata['status'] = 'cancelled'
+                        metadata['requester'] = p2['id']
+                        metadata['requestee'] = p1['id']
+                        timestamp = p2['last_trade_request']
+                        p2['last_trade_request'] = None
                         event.value[p2_id] = p2
                         event.value[str(p.id_in_group)] = p1
-                        metadata["queue"] = self.queue_state(event.value)
-                        event.value["metadata"][timestamp] = metadata
+                        metadata['queue'] = self.queue_state(event.value)
+                        event.value['metadata'][timestamp] = metadata
                 # service_other
-                elif p1["pos"] > 0:
+                elif p1['pos'] > 0:
                     # this is the only case I know of where you can get the same alert twice in a row (except none)
                     # if you get the same alert twice in a row the alert will not display because the watch function
                     # that displays alerts only get called when the alert changes.
-                    if p1["alert"] == Constants.alert_messages["next_queue"]:
-                        p1["alert"] = Constants.alert_messages["next_queue2"]
+                    if p1['alert'] == Constants.alert_messages['next_queue']:
+                        p1['alert'] = Constants.alert_messages['next_queue2']
                     else:
-                        p1["alert"] = Constants.alert_messages["next_queue"]
+                        p1['alert'] = Constants.alert_messages['next_queue']
                 else:
-                    p1["alert"] = Constants.alert_messages["none"]
-                p1["next"] = False
+                    p1['alert'] = Constants.alert_messages['none']
+                p1['next'] = False
 
             # someone has initiated a trade request
-            elif not p1["in_trade"] and p1["requesting"] != None:
-                if swap_method == "cut":
-                    p2 = event.value[str(p1["requesting"])]
-                    temp = p2["pos"]
+            elif not p1['in_trade'] and p1['requesting'] != None:
+                if swap_method == 'cut':
+                    p2 = event.value[str(p1['requesting'])]
+                    temp = p2['pos']
                     for i in event.value:
-                        if i != "metadata" and i != str(p.id_in_group):
+                        if i != 'metadata' and i != str(p.id_in_group):
                             if (
-                                event.value[i]["pos"] < p1["pos"]
-                                and event.value[i]["pos"] >= p2["pos"]
+                                event.value[i]['pos'] < p1['pos']
+                                and event.value[i]['pos'] >= p2['pos']
                             ):
-                                event.value[i]["alert"] = Constants.alert_messages[
-                                    "cutted"
+                                event.value[i]['alert'] = Constants.alert_messages[
+                                    'cutted'
                                 ]
-                                event.value[i]["pos"] += 1
+                                event.value[i]['pos'] += 1
 
-                    p1["pos"] = temp
-                    p1["alert"] = Constants.alert_messages["cutting"]
+                    p1['pos'] = temp
+                    p1['alert'] = Constants.alert_messages['cutting']
                     metadata = {}
-                    metadata["status"] = "cut"
-                    metadata["requester"] = p1["id"]
-                    p1["requesting"] = None
-                    metadata["requestee"] = p2["id"]
-                    timestamp = p1["last_trade_request"]
-                    p1["last_trade_request"] = None
+                    metadata['status'] = 'cut'
+                    metadata['requester'] = p1['id']
+                    p1['requesting'] = None
+                    metadata['requestee'] = p2['id']
+                    timestamp = p1['last_trade_request']
+                    p1['last_trade_request'] = None
                     event.value[str(p.id_in_group)] = p1
-                    metadata["queue"] = self.queue_state(event.value)
-                    event.value["metadata"][timestamp] = metadata
+                    metadata['queue'] = self.queue_state(event.value)
+                    event.value['metadata'][timestamp] = metadata
 
                 else:
-                    p2 = event.value[str(p1["requesting"])]
+                    p2 = event.value[str(p1['requesting'])]
                     # requesting_clean
-                    if not p2["in_trade"]:
-                        print("CORRECT ")
-                        message = p1.get("message")
+                    if not p2['in_trade']:
+                        print('CORRECT ')
+                        message = p1.get('message')
                         print(message)
-                        p1["in_trade"] = True
-                        p2["in_trade"] = True
-                        p2["requested"] = p1["id"]
+                        p1['in_trade'] = True
+                        p2['in_trade'] = True
+                        p2['requested'] = p1['id']
 
                         if swap_method == 'double':
-                            p2["other_bid"] = p1["bid"]
+                            p2['other_bid'] = p1['bid']
                         else:
-                            p2["bid"] = p1["bid"]
+                            p2['bid'] = p1['bid']
 
-                        p2["message"] = message
-                        p1["alert"] = Constants.alert_messages["requesting"]
-                        p2["alert"] = Constants.alert_messages["requested"]
-                        event.value[str(p1["requesting"])] = p2
+                        p2['message'] = message
+                        p1['alert'] = Constants.alert_messages['requesting']
+                        p2['alert'] = Constants.alert_messages['requested']
+                        event.value[str(p1['requesting'])] = p2
                     # requesting_dirty; the js should prevent the logic from ever reaching this
                     else:
-                        p1["requesting"] = None
-                        p1["alert"] = Constants.alert_messages["unv_other"]
+                        p1['requesting'] = None
+                        p1['alert'] = Constants.alert_messages['unv_other']
 
             # someone has responded to a trade request
-            elif p1["in_trade"] and p1["requested"] != None:
-                if p1["accepted"] != 2:
+            elif p1['in_trade'] and p1['requested'] != None:
+                if p1['accepted'] != 2:
 
-                    p2_id = str(p1["requested"])
+                    p2_id = str(p1['requested'])
                     p2 = event.value[p2_id]
                     metadata = {}
 
                     # declining
-                    if p1["accepted"] == 0:
-                        p1["in_trade"] = False
-                        p2["in_trade"] = False
-                        p1["requested"] = None
-                        p2["requesting"] = None
-                        p1["accepted"] = 2
-                        p1["alert"] = Constants.alert_messages["declining"]
-                        p2["alert"] = Constants.alert_messages["declined"]
-                        p2["bid"] = None
-                        p1["bid"] = None
+                    if p1['accepted'] == 0:
+                        p1['in_trade'] = False
+                        p2['in_trade'] = False
+                        p1['requested'] = None
+                        p2['requesting'] = None
+                        p1['accepted'] = 2
+                        p1['alert'] = Constants.alert_messages['declining']
+                        p2['alert'] = Constants.alert_messages['declined']
+                        p2['bid'] = None
+                        p1['bid'] = None
 
-                        metadata["status"] = "declined"
+                        metadata['status'] = 'declined'
 
                     # accepting
-                    elif p1["accepted"] == 1:
+                    elif p1['accepted'] == 1:
 
-                        p1["in_trade"] = False
-                        p2["in_trade"] = False
-                        p1["requested"] = None
-                        p2["requesting"] = None
-                        p1["accepted"] = 2
-                        temp = p1["pos"]
-                        p1["pos"] = p2["pos"]
-                        p2["pos"] = temp
-                        p1["alert"] = Constants.alert_messages["accepting"]
-                        p2["alert"] = Constants.alert_messages["accepted"]
+                        p1['in_trade'] = False
+                        p2['in_trade'] = False
+                        p1['requested'] = None
+                        p2['requesting'] = None
+                        p1['accepted'] = 2
+                        temp = p1['pos']
+                        p1['pos'] = p2['pos']
+                        p2['pos'] = temp
+                        p1['alert'] = Constants.alert_messages['accepting']
+                        p2['alert'] = Constants.alert_messages['accepted']
 
                         # fix for typeError when accepting a swap during which
                         # the swapMethod is 'swap'
-                        if swap_method == "swap":
-                            p2["bid"] = None
+                        if swap_method == 'swap':
+                            p2['bid'] = None
 
-                        elif swap_method == "token":
+                        elif swap_method == 'token':
 
-                            p2["tokens"] -= 1
-                            p1["tokens"] += 1
+                            p2['tokens'] -= 1
+                            p1['tokens'] += 1
 
-                            p2["bid"] = -float(p1["bid"])
+                            p2['bid'] = -float(p1['bid'])
 
-                        elif swap_method == "take/Leave":
-                            p2["bid"] = -float(p1["bid"])
+                        elif swap_method == 'take/Leave':
+                            p2['bid'] = -float(p1['bid'])
 
                         else:
-                            print("YO")
-                            print(p2["bid"])
-                            print(p1["bid"])
-                            p2["other_bid"] = p1["bid"]
-                            av_bid = ( float(p1["bid"]) + float(p2["bid"]) ) / 2
-                            p2["average_bid"] = -av_bid
-                            p1["average_bid"] = av_bid
-                            # p2["bid"] = -float(p1["bid"])
+                            print('YO')
+                            print(p2['bid'])
+                            print(p1['bid'])
+                            p2['other_bid'] = p1['bid']
+                            av_bid = ( float(p1['bid']) + float(p2['bid']) ) / 2
+                            p2['average_bid'] = -av_bid
+                            p1['average_bid'] = av_bid
+                            # p2['bid'] = -float(p1['bid'])
 
                         # p2['bid'] = -float(p1['bid'])
-                        metadata["status"] = "accepted"
+                        metadata['status'] = 'accepted'
 
-                    metadata["requester"] = p2["id"]
-                    metadata["requestee"] = p1["id"]
-                    metadata["message"] = p1.get("message")
-                    metadata["bid"] = p1["bid"]
-                    timestamp = p2["last_trade_request"]
-                    p2["last_trade_request"] = None
+                    metadata['requester'] = p2['id']
+                    metadata['requestee'] = p1['id']
+                    metadata['message'] = p1.get('message')
+                    metadata['bid'] = p1['bid']
+                    timestamp = p2['last_trade_request']
+                    p2['last_trade_request'] = None
                     event.value[p2_id] = p2
                     event.value[str(p.id_in_group)] = p1
-                    metadata["queue"] = self.queue_state(event.value)
-                    event.value["metadata"][timestamp] = metadata
+                    metadata['queue'] = self.queue_state(event.value)
+                    event.value['metadata'][timestamp] = metadata
 
             event.value[str(p.id_in_group)] = p1  # partially redundant
 
         # broadcast the updated data out to all subjects
-        self.send("swap", event.value)
+        self.send('swap', event.value)
 
 
 class Subsession(BaseSubsession):
     def creating_session(self):
         if self.round_number == 1:
-            self.session.vars["pr"] = random.randrange(
+            self.session.vars['pr'] = random.randrange(
                 Constants.num_rounds) + 1
 
         # self.group_randomly()
@@ -424,48 +424,48 @@ class Subsession(BaseSubsession):
             # for i in range(Constants.num_rounds):
             #     self.session.vars[self.round_number].append({})
 
-            g_data = Constants.config[g_index][self.round_number - 1]["players"]
+            g_data = Constants.config[g_index][self.round_number - 1]['players']
 
             # sets up each player's starting values
             for p in g.get_players():
                 p.participant.vars[self.round_number] = {}
-                p.participant.vars[self.round_number]["pay_rate"] = g_data[
+                p.participant.vars[self.round_number]['pay_rate'] = g_data[
                     p.id_in_group - 1
-                ]["pay_rate"]
-                p.participant.vars[self.round_number]["c"] = g_data[p.id_in_group - 1][
-                    "c"
+                ]['pay_rate']
+                p.participant.vars[self.round_number]['c'] = g_data[p.id_in_group - 1][
+                    'c'
                 ]
-                p.participant.vars[self.round_number]["service_time"] = g_data[
+                p.participant.vars[self.round_number]['service_time'] = g_data[
                     p.id_in_group - 1
-                ]["service_time"]
-                p.participant.vars[self.round_number]["start_pos"] = g_data[
+                ]['service_time']
+                p.participant.vars[self.round_number]['start_pos'] = g_data[
                     p.id_in_group - 1
-                ]["start_pos"]
-                p.participant.vars[self.round_number]["endowment"] = g_data[
+                ]['start_pos']
+                p.participant.vars[self.round_number]['endowment'] = g_data[
                     p.id_in_group - 1
-                ]["endowment"]
-                p.participant.vars[self.round_number]["group"] = g_index
-                p.participant.vars[self.round_number]["carry_tokens"] = 0
+                ]['endowment']
+                p.participant.vars[self.round_number]['group'] = g_index
+                p.participant.vars[self.round_number]['carry_tokens'] = 0
                 p_data = {
-                    "id": p.id_in_group,
-                    "pos": p.participant.vars[self.round_number]["start_pos"],
-                    "in_trade": False,
-                    "last_trade_request": None,
-                    "requested": None,
-                    "requesting": None,
-                    "bid": None,
-                    "other_bid": None,
-                    "average_bid": None,
-                    "accepted": 2,
-                    "alert": Constants.alert_messages["none"],
-                    "num_players_queue": Constants.num_players,
-                    "num_players_service": 0,
-                    "next": False,
-                    "tokens": 0,
+                    'id': p.id_in_group,
+                    'pos': p.participant.vars[self.round_number]['start_pos'],
+                    'in_trade': False,
+                    'last_trade_request': None,
+                    'requested': None,
+                    'requesting': None,
+                    'bid': None,
+                    'other_bid': None,
+                    'average_bid': None,
+                    'accepted': 2,
+                    'alert': Constants.alert_messages['none'],
+                    'num_players_queue': Constants.num_players,
+                    'num_players_service': 0,
+                    'next': False,
+                    'tokens': 0,
                 }
 
                 self.session.vars[self.round_number][g_index][p.id_in_group] = p_data
-                self.session.vars[self.round_number][g_index]["metadata"] = {}
+                self.session.vars[self.round_number][g_index]['metadata'] = {}
 
 
 """
