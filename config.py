@@ -105,29 +105,16 @@ def export_data():
                 raise ValueError('Players must have pay_rates')
 
             if 'service_time' not in players[0]:
-                if 'k' not in settings:
+                if 'k' not in players[0]:
                     raise ValueError(
-                        ('Period settings must have a k variable if players'
-                        ' do not define service time')
+                        ('Players must have k or service time')
                     )
-
-                if 'service_distribution' not in settings:
-                    data[i][j]['settings']['service_distribution'] = 1
-
-                sd = settings['service_distribution']
                 t = settings['duration']
-                k = settings['k']
-
-                vals = [random.randrange(sd) + 1 for p in players]
-                vals = [v / sum(vals) for v in vals]
-                # vals = [round(v * k * t) for v in vals]
-                # vals = [round(vals[i] * k[i] * t) for i in range(len(k))]
-                vals = [round(k[i] * t) for i in range(len(k))]
-                print(vals)
-                positions = [n for n in range(1, len(period['players']) + 1)]
+                for k, player in players:
+                    data[i][j]['players'][k]['service_time'] = round(t * player['k']) 
+            if 'start_pos' not in players[0]:
                 for k, _ in enumerate(players):
-                    data[i][j]['players'][k]['service_time'] = vals
-                    data[i][j]['players'][k]['start_pos'] = positions[k]
+                    data[i][j]['players'][k]['start_pos'] = k
 
     print('exported data is')
     print(data[0][0])
@@ -146,19 +133,14 @@ data = [[
             'duration': 1800,
             'swap_method': 'token',
             'pay_method': 'gain',
-            'k': [0.1,0.1,0.1,0.7],
-            'service_distribution': 1,
             'discrete': True,
             'messaging': False,
-            #'tokenSwap': True,
         },
         'players': [
-            {'pay_rate': 4, 'endowment': 4, 'c': random.random()},
-            {'pay_rate': 4, 'endowment': 4, 'c': random.random()},
-            {'pay_rate': 4, 'endowment': 4, 'c': random.random()},
-            {'pay_rate': 4, 'endowment': 4, 'c': random.random()},
-            #{'pay_rate': 4, 'endowment': 4, 'c': random.random()},
-            #{'pay_rate': 4, 'endowment': 4, 'c': random.random()},
+            {'pay_rate': 4, 'endowment': 4, 'c': .4, 'k': 0.25},
+            {'pay_rate': 4, 'endowment': 4, 'c': .4, 'k': 0.25},
+            {'pay_rate': 4, 'endowment': 4, 'c': .4, 'k': 0.25},
+            {'pay_rate': 4, 'endowment': 4, 'c': .4, 'k': 0.25},
         ],
     } for i in range(4)
 ]]
