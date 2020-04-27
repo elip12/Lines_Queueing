@@ -37,7 +37,7 @@ def format_data():
         grplist = [{'settings': v, 'players': []} for k,v in grp_dict.items()]
         for i, period in enumerate(grplist):
             plr_df = pdf[(pdf.group_id == grp) & (pdf.num_period == i + 1)]
-            plr_df = plr_df[['pay_rate', 'endowment', 'c']]
+            plr_df = plr_df.drop(['block_id', 'num_period', 'group_id', 'player_id'], axis=1)
             grplist[i]['players'] = [*plr_df.T.to_dict().values()]
         data.append(grplist)
     return data
@@ -110,7 +110,7 @@ def export_data():
                         ('Players must have k or service time')
                     )
                 t = settings['duration']
-                for k, player in players:
+                for k, player in enumerate(players):
                     data[i][j]['players'][k]['service_time'] = round(t * player['k']) 
             if 'start_pos' not in players[0]:
                 for k, _ in enumerate(players):
@@ -118,7 +118,6 @@ def export_data():
 
     print('exported data is')
     print(data[0][0])
-    # data.append(data[0])
     with open('older.json', 'w') as outfile:
         json.dump(data, outfile)
 
