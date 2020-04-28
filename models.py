@@ -29,17 +29,17 @@ class Constants(BaseConstants):
     participation_fee = c(5)
 
     config = config_py.export_data()
-    print('CONFIG EXPORTED')
+    # print('CONFIG EXPORTED')
     num_rounds = len(config[0])
-    print('NUM_ROUNDS:', num_rounds)
+    # print('NUM_ROUNDS:', num_rounds)
     num_players = sum([len(group[0]['players']) for group in config])
     num_players = len(config[0][0]['players'])
 
-    print('NUM PLAYERS: ', num_players)
+    # print('NUM PLAYERS: ', num_players)
 
     players_per_group = len(config[0][0]['players'])
 
-    print('PLAYERS PER GROUP: ', players_per_group)
+    # print('PLAYERS PER GROUP: ', players_per_group)
 
     #players_per_group = 4
 
@@ -143,8 +143,8 @@ class Group(RedwoodGroup):
     # first person to have entered the service room, and the last element in the list is the person
     # in the back of the queue.
     def queue_state(self, data):
-        print('data before sorting queue is:')
-        print(data)
+        # print('data before sorting queue is:')
+        # print(data)
 
         queue = {}
         for p in self.get_players():
@@ -333,9 +333,9 @@ class Group(RedwoodGroup):
                 else:
                     # requesting_clean
                     if not p2['in_trade']:
-                        print('CORRECT ')
+                        # print('CORRECT ')
                         message = p1.get('message')
-                        print(message)
+                        # print(message)
                         p1['in_trade'] = True
                         p2['in_trade'] = True
                         p2['requested'] = p1['id']
@@ -410,9 +410,9 @@ class Group(RedwoodGroup):
                             p2['bid'] = -float(p1['bid'])
 
                         else:
-                            print('YO')
-                            print(p2['bid'])
-                            print(p1['bid'])
+                            # print('YO')
+                            # print(p2['bid'])
+                            # print(p1['bid'])
 
                             # reworked double auction
                             p2['other_bid'] = p1['bid']
@@ -489,52 +489,54 @@ class Subsession(BaseSubsession):
             self.session.vars['pr'] = random.randrange(
                 Constants.num_rounds) + 1
 
-            # just dump header
-            self.dump_metadata()
+        # TOOK THIS ONE TAB BACK
 
-            # since there is no group.vars, all group data is stored in session.vars,
+        # just dump header
+        self.dump_metadata()
 
-            self.session.vars[self.round_number] = [{}
+        # since there is no group.vars, all group data is stored in session.vars,
+        self.session.vars[self.round_number] = [{}
                                                     for i in range(len(self.get_groups()))]
-            for g_index, g in enumerate(self.get_groups()):
-                g_data = Constants.config[g_index][self.round_number - 1]['players']
+        for g_index, g in enumerate(self.get_groups()):
+            g_data = Constants.config[g_index][self.round_number - 1]['players']
 
-                # sets up each player's starting values
-                for p in g.get_players():
-                    p.participant.vars[self.round_number] = {}
-                    p.participant.vars[self.round_number]['pay_rate'] = g_data[
-                        p.id_in_group - 1
-                    ]['pay_rate']
-                    p.participant.vars[self.round_number]['c'] = g_data[p.id_in_group - 1][
-                        'c'
-                    ]
-                    p.participant.vars[self.round_number]['service_time'] = g_data[
-                        p.id_in_group - 1
-                    ]['service_time']
-                    p.participant.vars[self.round_number]['start_pos'] = g_data[
-                        p.id_in_group - 1
-                    ]['start_pos']
-                    p.participant.vars[self.round_number]['endowment'] = g_data[
-                        p.id_in_group - 1
-                    ]['endowment']
-                    p.participant.vars[self.round_number]['group'] = g_index
-                    p_data = {
-                        'id': p.id_in_group,
-                        'pos': p.participant.vars[self.round_number]['start_pos'],
-                        'in_trade': False,
-                        'last_trade_request': None,
-                        'requested': None,
-                        'requesting': None,
-                        'bid': None,
-                        'accepted': 2,
-                        'alert': Constants.alert_messages['none'],
-                        'num_players_queue': Constants.num_players,
-                        'num_players_service': 0,
-                        'next': False,
-                        'tokens': 0,
-                    }
+            # sets up each player's starting values
+            for p in g.get_players():
+                p.participant.vars[self.round_number] = {}
+                p.participant.vars[self.round_number]['pay_rate'] = g_data[
+                    p.id_in_group - 1
+                ]['pay_rate']
+                p.participant.vars[self.round_number]['c'] = g_data[p.id_in_group - 1][
+                    'c'
+                ]
+                p.participant.vars[self.round_number]['service_time'] = g_data[
+                    p.id_in_group - 1
+                ]['service_time']
+                p.participant.vars[self.round_number]['start_pos'] = g_data[
+                    p.id_in_group - 1
+                ]['start_pos']
+                p.participant.vars[self.round_number]['endowment'] = g_data[
+                    p.id_in_group - 1
+                ]['endowment']
+                p.participant.vars[self.round_number]['group'] = g_index
+                p.participant.vars[self.round_number]['tokens'] = 0
+                p_data = {
+                    'id': p.id_in_group,
+                    'pos': p.participant.vars[self.round_number]['start_pos'],
+                    'in_trade': False,
+                    'last_trade_request': None,
+                    'requested': None,
+                    'requesting': None,
+                    'bid': None,
+                    'accepted': 2,
+                    'alert': Constants.alert_messages['none'],
+                    'num_players_queue': Constants.num_players,
+                    'num_players_service': 0,
+                    'next': False,
+                    'tokens': 0,
+                }
 
-                    self.session.vars[self.round_number][g_index][p.id_in_group] = p_data
+                self.session.vars[self.round_number][g_index][p.id_in_group] = p_data
         self.group_randomly()
 
 """

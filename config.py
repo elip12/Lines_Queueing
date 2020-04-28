@@ -18,10 +18,10 @@ data = [[
     {  # Type 1: double, no communication, 8 players
         #
         "settings": {
-            "duration": 60,
+            "duration": 30,
             "swap_method": "token",
             "pay_method": "gain",
-            "k": [1-(3/60),(1/60),(1/60),(1/60)],
+            "k": [1-(3/30),(1/30),(1/30),(1/30)],
             "service_distribution": 1,
             "discrete": True,
             "messaging": False,
@@ -40,6 +40,7 @@ data = [[
 
 ] ]
 # data[1][1]['settings']['messaging'] = False
+# data[0][1]['settings']['block'] = 9
 data[0][1]['settings']['swap_method'] = "swap"
 data[0][2]['settings']['swap_method'] = "take/Leave"
 data[0][3]['settings']['swap_method'] = "double"
@@ -136,8 +137,8 @@ def export_data():
                     data[i][j]["players"][k]["service_time"] = vals
                     data[i][j]["players"][k]["start_pos"] = positions[k]
 
-    print("exported data is")
-    print(data[0][0])
+    # print("exported data is")
+    # print(data[0][0])
     # data.append(data[0])
     with open('older.json', 'w') as outfile:
         json.dump(data, outfile)

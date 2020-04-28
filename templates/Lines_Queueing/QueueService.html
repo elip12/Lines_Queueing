@@ -94,7 +94,7 @@
                     served: false,
                     endowment: {{ endowment_ | json }},
                     payoff: {{ endowment_ | json }},
-                    tokens: 0,
+                    tokens: {{ tokens_ | json }},
                     position: {{ start_pos_ | json }},
                     in_trade: false, // state
                     requested: null, // person
@@ -632,7 +632,7 @@
         v-if="comp_pos == self_pos + 1 && requested != null && messaging">
         message from {comp_pos}: {message} </div>
         <p>
-        <div style="text-align: center;">
+        <div style="text-align: center">
             <input v-if="comp_pos == self_pos + 1 && requested != null"
             type="number" id="bid" max="vm.payoff" min="0"
             style="width: 58%; "

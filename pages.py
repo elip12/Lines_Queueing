@@ -61,6 +61,23 @@ class QueueService(Page):
                                                           1]['settings']['messaging']
         self.player.cost = self.participant.vars[self.round_number]['c']
 
+        # if this block number is equal to the one before it
+        # if this round number > 1
+        # keep yo tokens
+
+        if self.round_number > 1:
+
+            previous_block = Constants.config[g_index][self.round_number-1]['settings']['block']
+            current_block = Constants.config[g_index][self.round_number]['settings']['block']
+
+            if current_block == previous_block:
+
+                self.player.tokens = self.participant.vars[self.round_number-1]['tokens']
+
+            else:
+
+                self.player.tokens = 0
+
         return {
             'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'duration'
@@ -69,6 +86,7 @@ class QueueService(Page):
             'c_': self.participant.vars[self.round_number]['c'],
             'service_time_': self.participant.vars[self.round_number]['service_time'],
             'start_pos_': self.participant.vars[self.round_number]['start_pos'],
+            'tokens_': self.player.tokens,
             'round_': self.round_number,
             'num_players_': Constants.num_players,
             'data': g_data,
@@ -98,15 +116,17 @@ class BetweenPages(Page):
 
     def vars_for_template(self):
         all_players = self.group.get_players()
-        print('len of all_players is: ', len(all_players))
-        print('all_players is: ', all_players)
+        # print('len of all_players is: ', len(all_players))
+        # print('all_players is: ', all_players)
 
         startLine = {}
         displayStartLine = []
 
         for p in all_players:
-            print('p.start_pos is: ', p.start_pos)
+            # print('p.start_pos is: ', p.start_pos)
             startLine[str(p.start_pos)] = p.id_in_group
+
+        self.participant.vars[self.round_number]['tokens'] = self.player.tokens
 
         """
 
