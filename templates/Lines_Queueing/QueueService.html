@@ -152,6 +152,15 @@
                     this.now = parseInt(new Date().getTime() / 1000)
                 }.bind(this), 999) // assume a 1 ms delay for all information transit and logic
                 this.paidCost = new Array(this.num_players).fill(false)
+                // for new rounds when tokens carry
+                // p.tokens are carried over, g_data needs to update
+                if(this.swap_method == 'token'){
+                    for(pp in g_data) {
+                        if (g_data.hasOwnProperty(pp) && pp != 'metadata') {
+                            g_data[pp]['tokens'] = this.tokens
+                        }
+                    }
+                }
             },
             // computed functions get called every time one of their dependencies changes
             computed: {
@@ -637,7 +646,7 @@
             type="number" id="bid" max="vm.payoff" min="0"
             style="width: 58%; "
             onKeyPress="if (event.keyCode == 13) return false"/>
-            <button type="button" class="btn btn-large btn-yes"
+            <button type="button" class="btn btn-large"
                 style="margin-left: 0px; margin-top: 5px"
                 v-if="comp_pos == self_pos + 1 && requested != null"
                 v-on:click="send_click">Send</button>
@@ -707,7 +716,7 @@
                     }
                 }
             }
-            console.log(g_data)
+            // console.log(g_data)
             if(vm.swap_method == 'double') {
                 vm.bid = p.other_bid
             }
