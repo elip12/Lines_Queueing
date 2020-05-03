@@ -82,6 +82,7 @@ class QueueService(Page):
             'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'duration'
             ],
+            'block_': Constants.config[g_index][self.round_number]['settings']['block'],
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'c_': self.participant.vars[self.round_number]['c'],
             'service_time_': self.participant.vars[self.round_number]['service_time'],

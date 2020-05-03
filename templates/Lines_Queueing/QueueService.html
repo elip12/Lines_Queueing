@@ -82,6 +82,7 @@
                     // player data
                     paidBids: [],
                     period: 0,
+                    block: {{ block_ | json }},
                     paid: false,
                     message: 'placeholder',
                     start_pos: {{ start_pos_ | json }},
@@ -183,6 +184,12 @@
                     this.display_alert = this.current_alert
                     this.dur = 0
                     this.alert_opacity = 1
+                    // makes this alert always turned on
+                    // unless another alert comes through,
+                    // then it does that alert first (with fadeout)
+                    if(this.display_alert == 'Current period is for practice and payoff will not be recorded'){
+                        this.alert_duration = time_remaining_period();
+                    }
                     this.alert_interval = setInterval( function() {
                         if(this.dur >= this.alert_duration) {
                             this.display_alert = ''
@@ -216,6 +223,14 @@
 
                 now: function() {
                     let period = g_data[this.ID]['period']
+
+                    // every second, if it's the practice round
+                    // and there is no alert on the screen
+                    // make it this message
+                    if(this.block == 0 && this.display_alert == ''){
+                        this.current_alert = 'Current period is for practice and payoff will not be recorded'
+                    }
+
                     if(this.service_color == '#28b738')
                         this.service_color = '#545353'
 
