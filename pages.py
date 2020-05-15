@@ -45,7 +45,9 @@ class QueueService(Page):
 
     def get_timeout_seconds(self):
         g_index = self.participant.vars[self.round_number]['group']
-        return Constants.config[g_index][self.round_number - 1]['settings']['duration']
+        return int(Constants.group_config.loc[(Constants.group_config['num_period'] == self.round_number) &
+                    (Constants.group_config['group_id'] == g_index + 1)]['duration'].iloc[0])
+        # return Constants.config[g_index][self.round_number - 1]['settings']['duration']
 
     def vars_for_template(self):
         g_index = self.participant.vars[self.round_number]['group']
@@ -55,11 +57,11 @@ class QueueService(Page):
             self.group.cache = g_data
         else:
             g_data = self.group.cache
-        self.player.discrete = Constants.config[g_index][self.round_number -
-                                                         1]['settings']['discrete']
-        self.player.messaging = Constants.config[g_index][self.round_number -
-                                                          1]['settings']['messaging']
-        self.player.cost = self.participant.vars[self.round_number]['c']
+        self.player.discrete = bool(Constants.group_config.loc[(Constants.group_config['num_period'] == self.round_number) & 
+                                    (Constants.group_config['group_id'] == g_index + 1)]['discrete'].iloc[0])
+        self.player.messaging = bool(Constants.group_config.loc[(Constants.group_config['num_period'] == self.round_number) & 
+                                    (Constants.group_config['group_id'] == g_index + 1)]['messaging'].iloc[0])
+        self.player.cost = float(self.participant.vars[self.round_number]['c'])
 
         # if this block number is equal to the one before it
         # if this round number > 1
@@ -67,8 +69,10 @@ class QueueService(Page):
 
         if self.round_number > 1:
 
-            previous_block = Constants.config[g_index][self.round_number-1]['settings']['block']
-            current_block = Constants.config[g_index][self.round_number]['settings']['block']
+            previous_block = Constants.group_config.loc[(Constants.group_config['num_period'] == self.round_number - 1) & 
+                                (Constants.group_config['group_id'] == g_index + 1)]['block_id'].iloc[0]
+            current_block = Constants.group_config.loc[(Constants.group_config['num_period'] == self.round_number) & 
+                                (Constants.group_config['group_id'] == g_index + 1)]['block_id'].iloc[0]
 
             if current_block == previous_block:
 
@@ -78,31 +82,29 @@ class QueueService(Page):
 
                 self.player.tokens = 0
 
+        # json can't use numpy data types?
         return {
-            'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
-                'duration'
-            ],
-            'block_': Constants.config[g_index][self.round_number]['settings']['block'],
-            'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
-            'c_': self.participant.vars[self.round_number]['c'],
+            'round_time_': int(Constants.group_config.loc[(Constants.group_config['num_period'] == self.round_number) &
+                                (Constants.group_config['group_id'] == g_index + 1)]['duration'].iloc[0]),
+            'block_': int(Constants.group_config.loc[(Constants.group_config['num_period'] == self.round_number) & 
+                                (Constants.group_config['group_id'] == g_index + 1)]['block_id'].iloc[0]),
+            'pay_rate_': float(self.participant.vars[self.round_number]['pay_rate']),
+            'c_': float(self.participant.vars[self.round_number]['c']),
             'service_time_': self.participant.vars[self.round_number]['service_time'],
-            'start_pos_': self.participant.vars[self.round_number]['start_pos'],
-            'tokens_': self.player.tokens,
-            'round_': self.round_number,
-            'num_players_': Constants.num_players,
+            'start_pos_': int(self.participant.vars[self.round_number]['start_pos']),
+            'tokens_': int(self.player.tokens),
+            'round_': int(self.round_number),
+            'num_players_': int(Constants.num_players),
             'data': g_data,
             'raw': self.session.vars,
-            'id': self.player.id_in_group,
-            'swap_method_': Constants.config[g_index][self.round_number - 1][
-                'settings'
-            ]['swap_method'],
-         
-            'pay_method_': Constants.config[g_index][self.round_number - 1]['settings'][
-                'pay_method'
-            ],
-            'discrete': self.player.discrete,
-            'messaging': self.player.messaging,
-            'endowment_': self.participant.vars[self.round_number]['endowment'],
+            'id': int(self.player.id_in_group),
+            'swap_method_': Constants.group_config.loc[(Constants.group_config['group_id'] == g_index + 1) &
+                                (Constants.group_config['num_period'] == self.round_number)]['swap_method'].iloc[0],
+            'pay_method_': Constants.group_config.loc[(Constants.group_config['group_id'] == g_index + 1) &
+                                (Constants.group_config['num_period'] == self.round_number)]['pay_method'].iloc[0],
+            'discrete': bool(self.player.discrete),
+            'messaging': bool(self.player.messaging),
+            'endowment_': float(self.participant.vars[self.round_number]['endowment']),
         }
 
     def before_next_page(self):
