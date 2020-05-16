@@ -38,6 +38,7 @@ def format_data():
         for i, period in enumerate(grplist):
             plr_df = pdf[(pdf.group_id == grp) & (pdf.num_period == i + 1)]
             plr_df = plr_df.drop(['block_id', 'num_period', 'group_id', 'player_id'], axis=1)
+            plr_df['service_time'] = [plr_df['service_time'].values.tolist() for a in range(len(plr_df['service_time']))]
             grplist[i]['players'] = [*plr_df.T.to_dict().values()]
         data.append(grplist)
     return data
@@ -114,7 +115,7 @@ def export_data():
                     data[i][j]['players'][k]['service_time'] = round(t * player['k']) 
             if 'start_pos' not in players[0]:
                 for k, _ in enumerate(players):
-                    data[i][j]['players'][k]['start_pos'] = k
+                    data[i][j]['players'][k]['start_pos'] = k + 1
 
     print('exported data is')
     print(data[0][0])
