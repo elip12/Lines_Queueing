@@ -14,7 +14,6 @@ import json
 from datetime import datetime
 from collections import OrderedDict
 from jsonfield import JSONField
-import pandas as pd
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 
@@ -29,13 +28,26 @@ class Constants(BaseConstants):
     name_in_url = 'Lines_Queueing'
     participation_fee = c(5)
 
-    player_config = pd.read_csv('Lines_Queueing/configs/config_player_pilot.csv')
-    group_config = pd.read_csv('Lines_Queueing/configs/config_group_pilot.csv')
+    config = config_py.export_data()
+    for g in config:
+        for r in g:
+            print(r['settings'])
+            for p in r['players']:
+                print(p)
+            print('\n')
+    print('CONFIG EXPORTED')
+    num_rounds = len(config[0])
+    print('NUM_ROUNDS:', num_rounds)
+    num_players = sum([len(group[0]['players']) for group in config])
+    num_players = len(config[0][0]['players'])
 
-    players_per_group = len(player_config.loc[(player_config['group_id'] == 1) &
-                           (player_config['num_period'] == 1)])
-    num_players = players_per_group
-    num_rounds = max(group_config['num_period'])
+    print('NUM PLAYERS: ', num_players)
+
+    players_per_group = len(config[0][0]['players'])
+
+    print('PLAYERS PER GROUP: ', players_per_group)
+
+    #players_per_group = 4
 
     # these will be displayed to players in the UI. Defined here for consistency and
     # a central location
@@ -129,9 +141,7 @@ class Group(RedwoodGroup):
     def period_length(self):
         g_index = self.get_player_by_id(
             1).participant.vars[self.round_number]['group']
-
-        return int(Constants.group_config.loc[(Constants.group_config['group_id'] == g_index + 1) &
-                    (Constants.group_config['num_period'] == self.round_number)]['duration'].iloc[0])
+        return Constants.config[g_index][self.round_number - 1]['settings']['duration']
 
     # takes in the data transferred back and forth by channels,
     # and generates a list representing the queue, where each element in the list
@@ -249,8 +259,9 @@ class Group(RedwoodGroup):
             # gets this player's dict from the transmitted event
             p1 = event.value[str(p.id_in_group)]
             g_index = p.participant.vars[self.round_number]['group']
-            swap_method = Constants.group_config.loc[(Constants.group_config['group_id'] == g_index + 1) &
-                            (Constants.group_config['num_period'] == self.round_number)]['swap_method'].iloc[0]
+            swap_method = Constants.config[g_index][self.round_number - 1]['settings'][
+                'swap_method'
+            ]
 
             # someone has entered the service room
             if p1['next'] == True:
@@ -480,39 +491,30 @@ class Subsession(BaseSubsession):
         # just dump header
         self.dump_metadata()
 
-        # since there is no group.vars, all group data is stored in session.vars,
         self.session.vars[self.round_number] = [{}
-                                                    for i in range(len(self.get_groups()))]
+                                                for i in range(len(self.get_groups()))]
         for g_index, g in enumerate(self.get_groups()):
-
-            # current group data (row)
-            # same group index, same period number
-            cgd = Constants.group_config.loc[(Constants.group_config['num_period'] == self.round_number) & 
-                    (Constants.group_config['group_id'] == g_index + 1)]
-
-            # current player data (rows)
-            # same group index, same period number
-            cpd = Constants.player_config.loc[(Constants.player_config['group_id'] == g_index + 1) &
-                    (Constants.player_config['num_period'] == self.round_number)]
-
-            positions = [n for n in range(1, Constants.players_per_group + 1)]
-            random.shuffle(positions)
+            g_data = Constants.config[g_index][self.round_number - 1]['players']
 
             # sets up each player's starting values
             for p in g.get_players():
-
-                # player i's row in the current players for this current group
-                player_data = cpd.loc[(cpd['player_id'] == p.id_in_group)]
-
                 p.participant.vars[self.round_number] = {}
-                p.participant.vars[self.round_number]['pay_rate'] = float(player_data['pay_rate'].iloc[0])
-                p.participant.vars[self.round_number]['c'] = float(player_data['c'].iloc[0])
-                p.participant.vars[self.round_number]['service_time'] = cpd['service_time'].tolist()
-                p.participant.vars[self.round_number]['start_pos'] = int(positions[p.id_in_group - 1])
-                p.participant.vars[self.round_number]['endowment'] = float(player_data['endowment'].iloc[0])
-
+                p.participant.vars[self.round_number]['pay_rate'] = g_data[
+                    p.id_in_group - 1
+                ]['pay_rate']
+                p.participant.vars[self.round_number]['c'] = g_data[p.id_in_group - 1][
+                    'c'
+                ]
+                p.participant.vars[self.round_number]['service_time'] = g_data[
+                    p.id_in_group - 1
+                ]['service_time']
+                p.participant.vars[self.round_number]['start_pos'] = g_data[
+                    p.id_in_group - 1
+                ]['start_pos']
+                p.participant.vars[self.round_number]['endowment'] = g_data[
+                    p.id_in_group - 1
+                ]['endowment']
                 p.participant.vars[self.round_number]['group'] = g_index
-                p.participant.vars[self.round_number]['tokens'] = 0
                 p_data = {
                     'id': p.id_in_group,
                     'pos': p.participant.vars[self.round_number]['start_pos'],
