@@ -13,8 +13,7 @@ class Instructions(Page):
     form_fields = ['time_Instructions']
 
     def is_displayed(self):
-        # return self.round_number == 1
-        return False
+        return self.round_number == 1
 
 
 class QueueServiceWaitPage(WaitPage):

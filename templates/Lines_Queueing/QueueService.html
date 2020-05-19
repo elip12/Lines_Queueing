@@ -187,7 +187,7 @@
                     // makes this alert always turned on
                     // unless another alert comes through,
                     // then it does that alert first (with fadeout)
-                    if(this.display_alert == 'Current period is for practice and payoff will not be recorded'){
+                    if(this.display_alert == 'This is a practice round and payoff will not be recorded'){
                         this.alert_duration = time_remaining_period();
                     }
                     this.alert_interval = setInterval( function() {
@@ -891,7 +891,7 @@
             <div class="col-12">
                 <div class="row infobar">
                     <div class="col-2 infocol infoborder">
-                        Round: <br>
+                        <span v-if="block == 0"> Practice </span> Round: <br>
                         {{ round_ }}
                     </div>
                     <div class="col-2 infocol infoborder">

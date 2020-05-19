@@ -66,7 +66,6 @@ class Constants(BaseConstants):
         'next_queue': 'You have advanced one position in the queue',
         'next_queue2': 'You have advanced one position in the queue ',
         'bad_bid': 'Your bid must be between 0 and your current payoff',
-        'practice': 'Current period is for practice and payoff will not be recorded',
         'none': '',
     }
 
