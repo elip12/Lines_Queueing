@@ -149,9 +149,6 @@ class Group(RedwoodGroup):
     # first person to have entered the service room, and the last element in the list is the person
     # in the back of the queue.
     def queue_state(self, data):
-        print('data before sorting queue is:')
-        print(data)
-
         queue = {}
         for p in self.get_players():
             pp = data[str(p.id_in_group)]
@@ -339,13 +336,19 @@ class Group(RedwoodGroup):
                 else:
                     # requesting_clean
                     if not p2['in_trade']:
-                        print('CORRECT ')
+                        # print('CORRECT ')
                         message = p1.get('message')
-                        print(message)
+                        # print(message)
                         p1['in_trade'] = True
                         p2['in_trade'] = True
                         p2['requested'] = p1['id']
-                        p2['bid'] = p1['bid']
+
+                        # reworked double auction
+                        if swap_method == 'double':
+                            p2['other_bid'] = p1['bid']
+                        else:
+                            p2['bid'] = p1['bid']
+
                         p2['message'] = message
                         p1['alert'] = Constants.alert_messages['requesting']
                         p2['alert'] = Constants.alert_messages['requested']
@@ -410,12 +413,13 @@ class Group(RedwoodGroup):
                             p2['bid'] = -float(p1['bid'])
 
                         else:
-                            print('YO')
-                            print(p2['bid'])
-                            print(p1['bid'])
-                            p2['bid'] = -float(p1['bid'])
 
-                        # p2['bid'] = -float(p1['bid'])
+                            # reworked double auction
+                            p2['other_bid'] = p1['bid']
+                            av_bid = ( float(p1['bid']) + float(p2['bid']) ) / 2
+                            p2['average_bid'] = -av_bid
+                            p1['average_bid'] = av_bid
+
                         metadata['status'] = 'accepted'
 
                     metadata['requester_pos_final'] = p2['pos']
@@ -483,10 +487,8 @@ class Subsession(BaseSubsession):
             self.session.vars['pr'] = random.randrange(
                 Constants.num_rounds) + 1
 
-            # just dump header
-            self.dump_metadata()
-
-            # since there is no group.vars, all group data is stored in session.vars,
+        # just dump header
+        self.dump_metadata()
 
         self.session.vars[self.round_number] = [{}
                                                 for i in range(len(self.get_groups()))]

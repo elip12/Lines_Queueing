@@ -13,8 +13,7 @@ class Instructions(Page):
     form_fields = ['time_Instructions']
 
     def is_displayed(self):
-        # return self.round_number == 1
-        return False
+        return self.round_number == 1
 
 
 class QueueServiceWaitPage(WaitPage):
@@ -61,10 +60,28 @@ class QueueService(Page):
                                                           1]['settings']['messaging']
         self.player.cost = self.participant.vars[self.round_number]['c']
 
+        # if this block number is equal to the one before it
+        # if this round number > 1
+        # keep yo tokens
+
+        if self.round_number > 1:
+
+            previous_block = Constants.config[g_index][self.round_number - 2]['settings']['block_id']
+            current_block = Constants.config[g_index][self.round_number - 1]['settings']['block_id']
+
+            if current_block == previous_block:
+
+                self.player.tokens = self.participant.vars[self.round_number-1]['tokens']
+
+            else:
+
+                self.player.tokens = 0
+
         return {
             'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'duration'
             ],
+            'block_': Constants.config[g_index][self.round_number - 1]['settings']['block_id'],
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'c_': self.participant.vars[self.round_number]['c'],
             'service_time_': self.participant.vars[self.round_number]['service_time'],
@@ -84,6 +101,7 @@ class QueueService(Page):
             'discrete': self.player.discrete,
             'messaging': self.player.messaging,
             'endowment_': self.participant.vars[self.round_number]['endowment'],
+            'tokens_': self.player.tokens,
         }
 
     def before_next_page(self):
@@ -98,15 +116,17 @@ class BetweenPages(Page):
 
     def vars_for_template(self):
         all_players = self.group.get_players()
-        print('len of all_players is: ', len(all_players))
-        print('all_players is: ', all_players)
+        # print('len of all_players is: ', len(all_players))
+        # print('all_players is: ', all_players)
 
         startLine = {}
         displayStartLine = []
 
         for p in all_players:
-            print('p.start_pos is: ', p.start_pos)
+            # print('p.start_pos is: ', p.start_pos)
             startLine[str(p.start_pos)] = p.id_in_group
+
+        self.participant.vars[self.round_number]['tokens'] = self.player.tokens
 
         """
 
@@ -149,7 +169,7 @@ class Results(Page):
 # order in which pages are displayed. A page's is_displayed method
 # can override this, and not all pages defined above need to be included
 page_sequence = [
-    Instructions,
+#    Instructions,
     QueueServiceWaitPage,
     QueueService,
     AfterService,

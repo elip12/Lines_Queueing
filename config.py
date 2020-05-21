@@ -110,12 +110,14 @@ def export_data():
                     raise ValueError(
                         ('Players must have k or service time')
                     )
+
                 t = settings['duration']
                 for k, player in enumerate(players):
                     data[i][j]['players'][k]['service_time'] = round(t * player['k']) 
             if 'start_pos' not in players[0]:
                 for k, _ in enumerate(players):
                     data[i][j]['players'][k]['start_pos'] = k + 1
+
 
     print('exported data is')
     print(data[0][0])

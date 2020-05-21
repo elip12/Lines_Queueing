@@ -30,7 +30,13 @@
         Instructions
     </h3>
     <p>
-        Add some instructions here.
+        In this game, you are a person waiting in a line with some other players to enter a service room. After a certain interval of seconds (denoted 'Service Time' in the header), a person will enter the service room and receive money (denoted 'Value' in the header). For those players who are still waiting outside, a waiting cost will be subtracted from their payoff (denoted 'Cost' in the header). Those who are in the service room and who have been serviced will not have the waiting cost deducted from their payoff when a new person enters the room. You can initiate a trade with the person in front of you to switch positions. Similarly, someone behind you can initiate a trade with you. The terms of trade for a given round is determined by the round's game type.
+    </p>
+    <p>
+        <b>Swap:</b> Propose a swap with the person in front of you. <br>
+        <b>Take/Leave:</b> Propose a single offer to trade spots with the person in front of you. <br>
+        <b>Double Auction:</b> Propose an offer to trade spots with the person in front of you. The switch is successful if your bid is larger than the other player's minimum acceptance offer. <br>
+        <b>Token:</b> Propose a swap with the person in front of you in exchange for a token. Your tokens are shown to the person in front of you during a trade, and you may see the tokens of the person behind you if they initiate a trade with you.
     </p>
 
 {% next_button %}
