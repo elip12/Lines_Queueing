@@ -101,6 +101,7 @@ class QueueService(Page):
             'discrete': self.player.discrete,
             'messaging': self.player.messaging,
             'endowment_': self.participant.vars[self.round_number]['endowment'],
+            'tokens_': self.player.tokens,
         }
 
     def before_next_page(self):
@@ -168,7 +169,7 @@ class Results(Page):
 # order in which pages are displayed. A page's is_displayed method
 # can override this, and not all pages defined above need to be included
 page_sequence = [
-    Instructions,
+#    Instructions,
     QueueServiceWaitPage,
     QueueService,
     AfterService,
