@@ -94,7 +94,6 @@ class QueueService(Page):
             'swap_method_': Constants.config[g_index][self.round_number - 1][
                 'settings'
             ]['swap_method'],
-         
             'pay_method_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'pay_method'
             ],
@@ -105,7 +104,7 @@ class QueueService(Page):
         }
 
     def before_next_page(self):
-        if self.round_number == Constants.num_rounds:
+        if self.round_number == Constants.payoff_round_number:
             self.player.set_payoffs()
 
 
@@ -119,12 +118,12 @@ class BetweenPages(Page):
         # print('len of all_players is: ', len(all_players))
         # print('all_players is: ', all_players)
 
-        startLine = {}
+        endLine = {}
         displayStartLine = []
 
         for p in all_players:
             # print('p.start_pos is: ', p.start_pos)
-            startLine[str(p.start_pos)] = p.id_in_group
+            endLine[str(p.start_pos)] = p.id_in_group
 
         self.participant.vars[self.round_number]['tokens'] = self.player.tokens
 
@@ -140,7 +139,7 @@ class BetweenPages(Page):
 
         return {
             'round': self.round_number,
-            'startLine': displayStartLine,
+            'endLine': sorted(endLine),
             'numPlayers': len(all_players),
             'id': self.player.id_in_group,
             'tokens': self.player.tokens,
