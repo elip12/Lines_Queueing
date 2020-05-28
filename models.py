@@ -103,7 +103,6 @@ class Player(BasePlayer):
     # for now will separate the two
     # method by which players swap: bid, swap, or cut
     swap_method = models.StringField()
-    tokenSwap = models.BooleanField()
     # method by which players accumulate money: gain or lose
     pay_method = models.StringField()
 
