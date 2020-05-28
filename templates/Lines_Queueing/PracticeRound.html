@@ -1,0 +1,1174 @@
+{% extends "otree_redwood/Page.html" %}
+{% load staticfiles otree %}
+
+{% comment %}
+
+    Eli Pandolfo <epandolf@ucsc.edu>
+
+    <!-- otree redwood:
+        if you call any function that calls 'channel.send()' in the plain javascript or within
+        the Vue machine, you will get an error saying channel does not have a method called
+        send.
+
+        However, if you call the function from the HTML or from a function that runs automatically
+        such as window.onload, it works fine. -->
+
+{% endcomment %}
+
+{% block scripts %}
+
+    <!--Import the redwood-period/channel webcomponent.-->
+    <script type="module" src="/static/otree-redwood/src/otree-constants/otree-constants.js"></script>    
+    <script type="module" src="/static/otree-redwood/src/redwood-channel/redwood-channel.js"></script>
+    <script type="module" src="/static/otree-redwood/src/redwood-period/redwood-period.js"></script>
+    <link href="https://unpkg.com/nprogress@0.2.0/nprogress.css" rel="stylesheet" />
+    <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
+    <script src="{% static "js/vue.js" %}"></script>
+    <script type='text/javascript'>
+        var g_data = {{ data | json }}
+        // time when user enters the queue room
+        // because there is a wait page, this is when all players simultaneously arrive
+        window.onload = function () {
+            // simple loading screen so clients don't display the vue machine loading
+            document.getElementById('app').style.visibility = 'hidden'
+            document.getElementById('arrive_time').value = new Date().toISOString()
+            NProgress.start()
+            setTimeout(() => {
+                document.getElementById('loading').style.visibility = 'hidden'
+                document.getElementById('app').style.visibility = 'visible'
+                NProgress.done()
+                }, 1100)
+        }
+
+        // time when a player leaves the service room
+        time_sr = function() {
+            document.getElementById('sr_time').value = new Date().toISOString()
+        }
+
+
+        // Log period start/end to the JavaScript console.
+        document.querySelector("redwood-period").addEventListener('period-start', function(event) {
+            console.log('period started');
+        });
+        document.querySelector("redwood-period").addEventListener('period-end', function(event) {
+            console.log('period ended');
+        });
+
+        /*
+            Vue machine
+            Holds all data for a single player.
+            Because of a property of Vue that objects stored in vm.data are promises,
+            to my knowledge you cannot modify objects stored in data (this does not apply
+            to primitives). For this reason, g_data, which is the object representing the event that
+            gets transmitted over websockets to the server, is stored outside Vue.
+
+            https://vuejs.org/v2/guide/
+        */
+        var vm = new Vue({
+            delimiters: ['{', '}'],
+            el: '#app',
+            mounted: function(){
+                setTimeout(()=>{
+                    this.initialOver = true;
+                }, this.service_time[this.num_players_service] * 1000)
+            },
+
+            data: function() {
+                return {
+                    initialOver: false,
+                    initialPaid: false,
+                    debug: 'none',
+
+                    // player data
+                    paidBids: [],
+                    period: 0,
+                    block: {{ block_ | json }},
+                    paid: false,
+                    message: 'placeholder',
+                    start_pos: {{ start_pos_ | json }},
+                    end_pos: -1,
+                    c: {{ c_ | json }},
+                    pay_rate: {{ pay_rate_ | json }}, // pay rate == value
+                    service_time: {{ service_time_ | json }},
+                    time_spent_in_front: 0,
+                    ID: {{ id | json }},
+                    served: false,
+                    endowment: {{ endowment_ | json }},
+                    payoff: {{ endowment_ | json }},
+                    tokens: {{ tokens_ | json }},
+                    position: {{ start_pos_ | json }},
+                    in_trade: false, // state
+                    requested: null, // person
+                    requesting: null, // person
+                    accepted: 2,
+                    current_alert: '',
+                    display_alert: '',
+                    last_event: null,
+                    waiting_time: 0,
+                    bid: null,
+                    other_bid: null,
+                    average_bid: null,
+
+                    //group data
+                    service_color: '#545353',
+                    discrete: {{ discrete | json}},
+                    messaging: {{ messaging | json}},
+                    swap_method: {{ swap_method_ | json}},
+                    tokenSwap: {{ tokenSwap | json}},
+                    pay_method: {{ pay_method_ | json}},
+                    start_time: null,
+                    now: null,
+                    num_players: {{ num_players_ | json }},
+                    num_players_queue: {{ num_players_ | json }},
+                    num_players_service: 0,
+                    period_length: {{ round_time_ | json }},
+                    alert_duration: 3.5, //duration in s an alert is shown
+                    alert_fadeout: 1, // duration in s an alert fades out
+                    alert_opacity: 1,
+                    dur: 0,
+                    alert_interval: null,
+                    trade_allowed: { // these are positions not IDs
+                        1: true,
+                        2: true,
+                        3: true,
+                        4: true,
+                        5: true,
+                        6: true,
+                        7: true,
+                        8: true,
+                        9: true,
+                        10: true,
+                        11: true,
+                        12: true,
+                    },
+                    channel : document.getElementById('channel'),
+
+                }
+            },
+            // Vue lifecycle hook: this function gets called when the Vue instance is created
+            created: function() {
+                this.repaint()
+                this.start_time = parseInt(g_data['start_time'])
+                setInterval(function() {
+                    this.now = parseInt(new Date().getTime() / 1000)
+                }.bind(this), 999) // assume a 1 ms delay for all information transit and logic
+                this.paidCost = new Array(this.num_players).fill(false)
+                // for new rounds when tokens carry
+                // p.tokens are carried over, g_data needs to update
+                if(this.swap_method == 'token'){
+                    for(pp in g_data) {
+                        if (g_data.hasOwnProperty(pp) && pp != 'metadata') {
+                            g_data[pp]['tokens'] = this.tokens
+                        }
+                    }
+                }
+            },
+            // computed functions get called every time one of their dependencies changes
+            computed: {
+                // everytime this.now changes (once per second), this function is called
+                time_remaining_period: function() {
+                    return this.period_length - (this.now - this.start_time)
+                },
+                h: function() {
+                    return this.num_players > 6 ? window.innerHeight : window.innerHeight * 0.55
+                },
+
+            },
+            // watch functions are called every time the property associated with the function name
+            // changes
+            watch: {
+                // updates the alert that the player sees
+                current_alert: function() {
+                    clearInterval(this.alert_interval)
+                    console.log("CURRENT ALERT: ", this.current_alert)
+                    this.display_alert = this.current_alert
+                    this.dur = 0
+                    this.alert_opacity = 1
+                    // makes this alert always turned on
+                    // unless another alert comes through,
+                    // then it does that alert first (with fadeout)
+                    if(this.display_alert == 'This is a practice round and payoff will not be recorded'){
+                        this.alert_duration = time_remaining_period();
+                    }
+                    this.alert_interval = setInterval( function() {
+                        if(this.dur >= this.alert_duration) {
+                            this.display_alert = ''
+                            clearInterval(this.alert_interval)
+                        }
+                        else if(this.dur >= this.alert_duration - this.alert_fadeout) {
+                            this.alert_opacity = 1 -
+                                (this.dur - (this.alert_duration - this.alert_fadeout))
+                            this.dur += 0.01
+                        }
+                        else {
+                            this.dur += 0.01
+                        }
+                    }.bind(this), 10)
+
+                    // if player has advanced one in the line (not the service room)
+                    // since the entering the service room has a different alert
+                    // there are two different alerts for advancing (one with a space at the end)
+                    if(this.current_alert == "You have advanced one position in the queue" || this.current_alert == "You have advanced one position in the queue ") {
+                        // subtract the individual waiting cost from the payoff
+                        // this continues until the player enters the service room
+                        // or if they stay in the line until the end of the period
+                        this.payoff -= this.c
+                    }
+                    //console.log(g_data)
+                },
+                // gets called every time this.now is updated, every second
+                // updates player's service time served, and payoff
+                // session info: two levels of treatment: trade with money, or without money
+                // swap vs cut
+
+                now: function() {
+                    let period = g_data[this.ID]['period']
+
+                    // every second, if it's the practice round
+                    // and there is no alert on the screen
+                    // make it this message
+                    if(this.block == 0 && this.display_alert == ''){
+                        this.current_alert = 'Current period is for practice and payoff will not be recorded'
+                    }
+
+                    if(this.service_color == '#28b738')
+                        this.service_color = '#545353'
+
+                    if(!this.served){  //still waiting outside
+
+                        this.waiting_time += 1
+
+                        if(this.position == 0) {
+                            this.end_pos = this.num_players_service
+                            if(this.time_spent_in_front == this.service_time[this.num_players_service] - 1) {
+                                this.service_color = '#28b738'
+                                this.next()
+                                time_sr()
+                                this.served = true
+                            }
+                            else {
+                                if(this.discrete && !this.paid){
+                                    this.payoff += this.pay_rate
+                                    this.paid = true
+                                }
+                                else if(!this.discrete){
+                                    this.payoff += this.pay_rate
+                                }
+                                this.time_spent_in_front += 1
+                            }
+                        }
+
+                        // comment this if clause out if you want to test without anyone
+                        // ever entering the service room
+                        if(this.position == 1 && this.num_players_service == 0 && this.initialOver)
+                        {
+                            this.service_color = '#28b738'
+                            this.next()
+                        }
+                    }
+                },
+                // used to determine whether buttons are clickable
+                last_event: function() {
+                    for(var p in g_data) {
+                        if (!this.in_trade && g_data.hasOwnProperty(p) && p != 'metadata'
+                                && !g_data[p]['in_trade']) {
+                            this.trade_allowed[g_data[p]['pos']] = true
+                        }
+                        else {
+                            this.trade_allowed[g_data[p]['pos']] = false
+                        }
+                    }
+                },
+            },
+            // user defined methods, that can be called within Vue, the js, or the HTML
+            methods: {
+                repaint: function() {
+                    console.log('repainting')
+                    let p = g_data[this.ID]
+                    this.position = p.pos
+                    this.in_trade = p.in_trade
+                    this.requested = p.requested
+                    this.message = p.message
+                    this.requesting = p.requesting
+                    this.accepted = p.accepted
+                    this.current_alert = p.alert
+                    this.num_players_queue = p.num_players_queue
+                    this.num_players_service = p.num_players_service
+                    // make buttons unclickable after page reloads
+                    this.last_event = this.last_event + 0
+                },
+                // emits a request. Called by a player clicking a request button
+                // single argument is the position of the requestee
+                // the position of the requester is stored in data and is already known
+                request: function(obj) {
+                    pos = obj['pos']
+                    bid = obj['bid']
+                    message = obj['message']
+                    for(let p in g_data) {
+                        if (g_data.hasOwnProperty(p) && p != 'metadata') {
+                            if(g_data[p]['pos'] == pos) {
+                                g_data[this.ID]['requesting'] = g_data[p]['id']
+                                g_data[this.ID]['last_trade_request'] = new Date().getTime()
+                                g_data[this.ID]['bid'] = bid
+                                g_data[this.ID]['message'] = message
+                            }
+                        }
+                    }
+                    this.update()
+                },
+                // respond to a request: called when a player clicks a yes/no button
+                respond: function(yesno) {
+                    g_data[this.ID]['accepted'] = yesno
+                    this.update()
+                },
+
+                displayMode: function(){
+                    return this.swap_method.charAt(0).toUpperCase() + this.swap_method.slice(1)
+                },
+                // called when someone's service time has run out; someone is about to enter the
+                // service room
+                next: function() {
+                    for(p in g_data) {
+
+                        if (g_data.hasOwnProperty(p) && p != 'metadata') {
+
+                            if(g_data[p]['period'] == undefined){
+
+                                g_data[p]['period'] = 0
+                            }
+                            g_data[p]['period'] += 1
+                            g_data[p]['pos']--
+                            g_data[p]['num_players_queue']--
+                            g_data[p]['num_players_service']++
+                            g_data[p]['next'] = true
+                            g_data[p]['bid'] = this.bid
+                        }
+
+                    }
+                    this.update()
+                },
+
+                // sends g_data to server
+                // state machine in server changes relevant fields then sends data back to client
+                // eventListener sets received payload to g_data
+                update: function() {
+                    this.channel.send(g_data)
+                }
+            }
+        })
+
+        /*  Component for queue player representation
+            vm means Vue machine or the vue instance defined above
+            Because the component needs to know whether the player it represents is in trade or not,
+            it needs to access the vm. So, it cannot be defined above the vm. Since the vm
+            automatically becomes the parent of components defined above it, but does not recognize
+            components defined below it. The components cannot be defined inside it because for some
+            reason doing that causes a stack overflow.
+
+            The point is that you will see warnings related to the component declaration in the
+            console, but they can be ignored and have no effect on the program running.
+        */
+        Vue.component( 'q-bubble', {
+            delimiters: ['{', '}'],
+            props: ['num_players', 'comp_pos', 'self_pos', 'requested', 'swap_method',
+            'swap', 'message', 'messaging'],
+            data: function() {
+                return {
+                    bid: null,
+                    bid_clicked: false,
+                }
+            },
+            computed: {
+                trade_allowed: function() {
+                    return vm.trade_allowed[this.comp_pos]
+                },
+                in_bid: function() {
+                    return vm.bid
+                },
+                toke: function() {
+                    for(let p in g_data) {
+                        if (g_data.hasOwnProperty(p) && p != 'metadata') {
+                            if(g_data[p]['pos'] == this.self_pos+1) {
+                                return g_data[p]['tokens']
+                            }
+                        }
+                    }
+                }
+            },
+
+
+            methods: {
+                bid_click: function() {
+                    this.bid_clicked = true
+                },
+                send_click: function(bid) {
+                    this.bid_clicked = false
+                    this.message = ""
+
+                    if(this.messaging && document.getElementById('inputMessage')){
+                        this.message = document.getElementById('inputMessage').value
+                    }
+
+                    if(this.swap_method == 'swap') {
+                        vm.request({pos: this.comp_pos, bid: null, message: this.message})
+                    }
+
+                    else if (this.swap_method == 'token') {
+                        vm.request({pos: this.comp_pos, bid: Number(1), message: this.message})
+                    }
+
+                    // for player 1's bid, vm bid(2) will be null
+                    // when player 2 gives bid in response, vm bid(2) will be player 1's original bid
+
+                    else if (this.swap_method == 'double') {
+                        this.bid = parseFloat(document.getElementById('bid').value)
+                        console.log("double auction format in send_click")
+                        console.log("bid 1 is: " + this.bid)
+                        console.log("vm bid (2) is: " + vm.bid)
+                        console.log(typeof this.bid)
+                        console.log(typeof vm.bid)
+
+                        if(this.bid < 0 || this.bid > vm.payoff || isNaN(this.bid)){
+                            vm.current_alert = "Invalid bid"
+                        }
+                        else {
+                            if (vm.bid != null) {
+                                vm.bid = parseFloat(vm.bid)
+                                if (vm.bid > this.bid) {
+                                    console.log("swap accepted")
+
+                                    //3
+                                    console.log("vm bid before: " + vm.bid)
+
+                                    //1
+                                    console.log("this.bid before :" + this.bid)
+
+                                    // avg_bid = (this.bid + vm.bid) / 2;
+
+                                    // console.log("vm bid is " + vm.bid)
+                                    // console.log("this bid is " + this.bid)
+                                    // console.log("avg bid is now: " + avg_bid)
+                                    // this.bid = avg_bid
+
+                                    g_data[vm.ID]['bid'] = this.bid
+
+                                    //player 1 bids
+                                    //stored in vm
+
+                                    //player 2 bids
+                                    //uses p2 and vm bid to average
+
+                                    //player 1 bid updated
+
+                                    //updates the requester's player bid
+                                    //this.comp_pos is the person further in the queue
+                                    //so the requester will always be behind, position: this.comp_pos-1
+                                    // g_data[String(Number(this.comp_pos)-1)]['bid'] = this.bid
+
+                                    //vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2)})
+                                    vm.respond(1)
+                                }
+                                else {
+                                    console.log("swap rejected!")
+                                    vm.respond(0)
+                                }
+                            }
+                            // only the requester has given his/her bid
+                            else {
+                                vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2), message: this.message})
+                            }
+                        }
+                    }
+
+                    // take it or leave it
+                    else {
+                        this.bid = parseFloat(document.getElementById('bid').value)
+
+                        if(this.bid < 0 || this.bid > vm.payoff || isNaN(this.bid)){
+                                vm.current_alert = 'Your bid must be between 0 and your current payoff'
+                        }
+
+                        else {
+                            vm.request({pos: this.comp_pos, bid: Number(this.bid).toFixed(2),
+                            message: this.message})
+                        }
+                    }
+                }
+            },
+            mounted(){
+                console.log(this.comp_pos == this.num_players - 1)
+            },
+            template: `
+<div v-if="num_players >= comp_pos">
+    <div class="row padded-row">
+        <svg class="svg">
+            <ellipse cx="40" cy="60" ry="35" rx="25" v-if="comp_pos != self_pos"/>
+            <ellipse cx="40" cy="60" ry="35" rx="25" style="fill: #545353;"
+                v-if="comp_pos == self_pos"/>
+            <text v-bind:x="35 - (parseInt(comp_pos / 10) * 4)" y="65" v-if="comp_pos != self_pos">
+               { comp_pos }
+            </text>
+            <text v-bind:x="35 - (parseInt(comp_pos / 10) * 4)" y="65" style="fill: whitesmoke;" v-if="comp_pos == self_pos">
+                { comp_pos }
+            </text>
+        </svg>
+    </div>
+
+
+
+
+
+    <div class="row btn-row" v-if="swap_method == 'swap'">
+
+        <button type="button" class="btn btn-large"
+        style="margin-left: 18px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+        v-on:click="send_click">Swap</button>
+
+        <button type="button" class="btn btn-large"
+            style="margin-left: 18px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Swap</button>
+
+        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-yes"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(1)">Yes</button>
+        </div>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-no"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(0)">No</button>
+        </div>
+        <div id="displayMessage" class="col-6"
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging">
+        message from {comp_pos}: {message} </div>
+    </div>
+
+
+
+
+
+    <div class="row btn-row" v-if="swap_method == 'token'">
+
+        <button type="button" class="btn btn-large"
+        style="margin-left: 18px;" v-if="comp_pos == self_pos - 1 && trade_allowed"
+        v-on:click="send_click">Swap</button>
+
+        <button type="button" class="btn btn-large"
+            style="margin-left: 18px;" v-if="comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Swap</button>
+
+        <textarea id="inputMessage" v-if="comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+
+        <p v-if="comp_pos == self_pos + 1 && requested != null"
+            style="width: 100%; text-align: center">
+            player {comp_pos} tokens: { toke }
+        <p>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-yes"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(1)">Yes</button>
+        </div>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-no"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(0)">No</button>
+        </div>
+        <div id="displayMessage" class="col-6"
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging">
+        message from {comp_pos}: {message} </div>
+    </div>
+
+
+
+
+
+    <div class="row btn-row" v-if="swap_method == 'take/Leave'">
+
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="bid_click">Bid</button>
+
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Bid</button>
+
+        <input v-if="bid_clicked && comp_pos == self_pos - 1"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; margin-left: 22px; margin-bottom: 5px;"
+            onKeyPress="if (event.keyCode == 13) return false"/>
+
+        <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+
+         <button type="button" class="btn btn-large"
+            style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="send_click">Send</button>
+
+        <p v-if="comp_pos == self_pos + 1 && requested != null"
+            style="width: 100%; text-align: center">
+            Offer: { in_bid }
+        <p>
+        <div id="displayMessage" class="col-6"
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging">
+        message from {comp_pos}: {message} </div>
+
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-yes"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(1)">Yes</button>
+        </div>
+        <div class="col-6">
+            <button type="button" class="btn btn-large btn-no"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                onclick="vm.respond(0)">No</button>
+        </div>
+    </div>
+
+
+
+
+
+    <div class="row btn-row" v-if="swap_method == 'double'">
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="bid_click">Bid</button>
+
+        <button type="button" class="btn btn-large"
+            style="margin-left: 27px;" v-if="!bid_clicked && comp_pos == self_pos - 1 && !trade_allowed"
+            disabled>Bid</button>
+
+        <input v-if="bid_clicked && comp_pos == self_pos - 1"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; margin-left: 22px"
+            onKeyPress="if (event.keyCode == 13) return false"/>
+
+            <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+
+         <button type="button" class="btn btn-large"
+            style="margin-left: 18px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
+            v-on:click="send_click">Send</button>
+
+        <p v-if="comp_pos == self_pos + 1 && requested != null"
+            style="width: 100%; text-align: center">
+            <!-- Bid: { in_bid } -->
+        <div id="displayMessage" class="col-6"
+        v-if="comp_pos == self_pos + 1 && requested != null && messaging">
+        message from {comp_pos}: {message} </div>
+        <p>
+        <div style="text-align: center">
+            <input v-if="comp_pos == self_pos + 1 && requested != null"
+            type="number" id="bid" max="vm.payoff" min="0"
+            style="width: 58%; "
+            onKeyPress="if (event.keyCode == 13) return false"/>
+            <button type="button" class="btn btn-large"
+                style="margin-left: 0px; margin-top: 5px"
+                v-if="comp_pos == self_pos + 1 && requested != null"
+                v-on:click="send_click">Send</button>
+        </div>
+    </div>
+</div>
+            `
+        })
+
+        // component for service player representation
+        // same issues as q-bubble
+        Vue.component( 's-bubble', {
+            delimiters: ['{', '}'],
+            props: ['num_players', 'comp_pos', 'self_pos'],
+            template: `
+                <div class="col-4" v-if="num_players >= -comp_pos + 1">
+                    <svg class="svg-s">
+                        <ellipse cx="40" cy="60" ry="35" rx="25" style="fill: #545353;"
+                            v-if="comp_pos == self_pos"/>
+                        <ellipse cx="40" cy="60" ry="35" rx="25" v-if="comp_pos != self_pos"/>
+                    </svg>
+                </div>
+            `
+        })
+
+        // all group data pertinent to swaps and player states
+
+        // event listener to check for events sent by server over channel
+        vm.channel.addEventListener('event', function(event) {
+
+            // for debugging
+            //console.log(event.detail.channel) // "swap"
+            //console.log(new Date().getTime()) // timestamp
+            // console.trace(event.detail.payload) // test_order
+
+            g_data = event.detail.payload
+
+            // updates this player's vue data
+            vm.repaint()
+            let p = g_data[vm.ID]
+            // vm.tokens = p.tokens
+
+            vm.last_event = parseInt(new Date().getTime() / 1000)
+            if(p.in_trade == false && p.bid != null) {
+
+                if(vm.swap_method == 'token'){
+                    vm.tokens += Number(p.bid)
+                    // console.log(`i have ${vm.tokens} tokens`)
+                }
+
+                else if(vm.swap_method == 'double') { 
+                    vm.payoff = Number(vm.payoff) + Number(p.average_bid)
+                }
+
+                else {
+                    vm.payoff = Number(vm.payoff) + Number(p.bid)
+                }
+                p.bid = null
+            }
+
+            for(pp in g_data) {
+                if (g_data.hasOwnProperty(pp) && pp != 'metadata') {
+                    if(g_data[pp]['in_trade'] == false && ( g_data[pp]['bid'] != null || g_data[pp]['other_bid'] != null || g_data[pp]['average_bid'] != null ) ) {
+                        g_data[pp]['bid'] = null
+                        g_data[pp]['other_bid'] = null
+                        g_data[pp]['average_bid'] = null
+                    }
+                }
+            }
+            // console.log(g_data)
+            if(vm.swap_method == 'double') {
+                vm.bid = p.other_bid
+            }
+            else {
+                vm.bid = p.bid
+            }
+            vm.metadata = g_data['metadata']
+            //now, with reactivity, all of these fields should update in the html
+            //need to do some logic that updates the actual html from here
+        })
+
+    </script>
+
+{% endblock %}
+
+{% block styles %}
+    <style>
+        #inputMessage {
+            left: 50%;
+            z-index: 10000;
+            position: relative;
+            min-width: 200px;
+            transform: translateX(-50%);
+            margin: 10px;
+            border: 2px solid black;
+            border-radius: 3px;
+            font-size: 10px;
+
+        }
+        #displayMessage {
+            left: 50%;
+            z-index: 10000;
+            position: relative;
+            min-width: 200px;
+            transform: translateX(-50%);
+            margin: 10px;
+            border: 2px solid black;
+            border-radius: 3px;
+            font-size: 10px;
+            word-break: break-word;
+
+        }
+
+        .dev {
+            border-style: solid;
+            border-width: 1px;
+        }
+        .svg {
+            margin-left: 9px;
+        }
+        .svg-s {
+            margin-left: -7px;
+        }
+        .infobar {
+            height: 60px;
+            background-color: #dfdfdf;
+        }
+        .infoborder {
+            border-right: solid;
+            border-bottom: solid;
+            border-width: 1px;
+            border-color: #c0c0c0;
+        }
+        .infocol {
+            text-align: center;
+            color: #545353;
+            font-size: 12px;
+            font-family: sans-serif;
+        }
+        .alertbar {
+            text-align: center;
+            color: #e23f36;
+            height: 30px;
+            background-color: #dfdfdf;
+            border-bottom: solid;
+            border-color: #c0c0c0;
+            border-width: 1px;
+        }
+        .queue-1 {
+            background-color: #f3f2f2;
+
+        }
+        .queue-2 {
+            background-color: #fbfbfb;
+        }
+        .padded-row {
+            margin-top: 30px;
+        }
+        .service {
+            background-color: #f2f2f2;
+        }
+        .btn {
+            background-color: #545353;
+            color: whitesmoke;
+        }
+        .btn-row {
+            margin-top: -30px;
+            height: 40px;
+        }
+        .btn-yes {
+            margin-left: -15px;  width: 250%; background-color: #28b738;
+        }
+        .btn-no {
+            margin-left: -15px; width: 250%; background-color: #e23f36;
+        }
+        .otree-timer {
+            display: none;
+        }
+        ellipse {
+            stroke: #545353;
+            stroke-width: 3px;
+            fill: none;
+        }
+        text {
+            color: #545353;
+            font-size: 16px;
+            font-family: sans-serif;
+        }
+    </style>
+{% endblock %}
+
+{% block title %}
+{% endblock %}
+
+{% block content %}
+    <!-- django form inputs -->
+    <input type="hidden" name="time_Queue" id="arrive_time" />
+    <input type="hidden" name="time_Service" id="sr_time" />
+
+    <redwood-period></redwood-period>
+    <redwood-channel
+        id="channel"
+        channel="swap">
+    </redwood-channel>
+    
+    <h1 id="loading">
+        Loading...
+    </h1>
+    <div id="app" style="visibility: hidden;">
+        <!-- hidden inputs that submit all required data to server at end of round -->
+        <input type="hidden" name="service_time" v-model="service_time"/>
+        <input type="hidden" name="pay_rate" v-model="pay_rate"/>
+        <input type="hidden" name="round_payoff" v-model="payoff.toFixed(2)"/>
+        <input type="hidden" name="start_pos" v-model="start_pos"/>
+        <input type="hidden" name="endowment" v-model="endowment"/>
+        <input type="hidden" name="swap_method" v-model="swap_method"/>
+        <input type="hidden" name="pay_method" v-model="pay_method"/>
+        <input type="hidden" name="waiting_time" v-model="waiting_time"/>
+        <input type="hidden" name="end_pos" v-model="end_pos"/>
+        <input type="hidden" name="tokens" v-model="tokens"/>
+
+
+        <!-- {% chat %} -->
+
+
+        <div class="row" v-bind:style="{ height: .775 * h + 'px;' }">
+            <div class="col-12">
+                <div class="row infobar">
+                    <div class="col-2 infocol infoborder">
+                        <span v-if="block == -1"> Practice Round </span> <span v-else> Round: <br>
+                        {{ round_ }} </span> 
+                    </div>
+                    <div class="col-2 infocol infoborder">
+                        Endowment: { endowment.toFixed(2) } <br>
+                        Cost: { c.toFixed(2) } <br>
+                        Value: { pay_rate.toFixed(2) }
+
+                    </div>
+                    <div class="col-2 infocol infoborder">
+                        Mode: { displayMode() } <br>
+                        Messaging: <span v-if="messaging"> Yes </span> <span v-else>No</span> <br>
+                        Service Time:  { service_time[num_players_service] }s
+                    </div>
+
+                    <div class="col-2 infocol infoborder">
+                        Current Payoff: <br>
+                        { payoff.toFixed(2) } <br>
+                        Tokens: { tokens }
+                    </div>
+                    <div class="col-2 infocol" style="font-size: 28px;
+                        border-bottom: solid; border-width: 1px; border-color: #bbbbbb">
+                        <div style="font-size: 12px;"> Time Remaining:</div>
+                        { time_remaining_period }
+                    </div>
+                    <div class="col-2 infocol infoborder"> </div>
+                </div>
+                <div class="row alertbar">
+                    <div class="col-8" v-bind:style="{ opacity: alert_opacity }">
+                        { display_alert }
+                    </div>
+                </div>
+                <div class="row" v-bind:style="{ height: .6625 * h + 'px;' }">
+                    <div class="col-7 queue" style="border-width: 1px">
+                        <div class="row" v-bind:style="{ height: (.6625 * h - 2) + 'px' }">
+                            <div class="col-2 queue-1">
+                                <q-bubble
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="6"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="12"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
+                            <div class="col-2 queue-2">
+                                <q-bubble
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
+                                    v-bind:num_players="num_players_queue"
+                                    comp_pos="5"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
+                                    comp_pos="11"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
+                            <div class="col-2 queue-1">
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message"
+                                    v-bind:messaging="messaging"
+                                    comp_pos="4"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="10"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
+                            <div class="col-2 queue-2">
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="3"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="9"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
+                            <div class="col-2 queue-1">
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="2"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="8"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
+                            <div class="col-2 queue-2">
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="1"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                                <q-bubble
+                                    v-bind:num_players="num_players_queue"
+                                    v-bind:message="message" v-bind:messaging="messaging"
+                                    comp_pos="7"
+                                    v-bind:self_pos="position"
+                                    v-bind:requested="requested"
+                                    v-bind:swap_method="swap_method"
+                                    v-on:request="request">
+                                </q-bubble>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-1 queue-1"
+                        v-bind:style="{ 'border-left': 'solid', 'border-right': 'solid',
+                            'border-width': '1px', 'border-color': service_color }">
+                        <div v-if="num_players_service > 0 && num_players_service <= num_players">
+                            <div class="row padded-row">
+                                <svg class="svg">
+                                    <ellipse cx="30" cy="60" ry="35" rx="25" v-if="position != 0"/>
+                                    <ellipse cx="30" cy="60" ry="35" rx="25" style="fill: #545353;"
+                                        v-if="position == 0"/>
+                                    <text v-bind:x="21" y="135"
+                                        v-if="position == 0">
+                                        { service_time[num_players_service] - time_spent_in_front }
+                                     </text>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4 service">
+                        <div class="row" v-bind:style="{ height: (.6625 * h - 2) + 'px' }">
+                            <div class="col-12">
+                                <div class="row padded-row" style="height: 100px;">
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-1"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-2"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                </div>
+                                <div class="row padded-row" style="height: 100px;"
+                                        v-if="num_players > 2">
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-3"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-4"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                </div>
+                                <div class="row padded-row" style="height: 100px;"
+                                        v-if="num_players > 4">
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-5"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-6"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-7"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-8"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-9"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                </div>
+                                <div class="row padded-row" style="height: 100px;"
+                                        v-if="num_players > 9">
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-10"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-11"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                    <s-bubble
+                                        v-bind:num_players="num_players_service"
+                                        comp_pos="-12"
+                                        v-bind:self_pos="position">
+                                    </s-bubble>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% comment %}
+
+{% endcomment %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
