@@ -493,7 +493,6 @@ class Subsession(BaseSubsession):
                                                 for i in range(len(self.get_groups()))]
         for g_index, g in enumerate(self.get_groups()):
             g_data = Constants.config[g_index][self.round_number - 1]['players']
-
             # sets up each player's starting values
             for p in g.get_players():
                 p.participant.vars[self.round_number] = {}

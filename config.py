@@ -118,8 +118,8 @@ def export_data():
                     data[i][j]['players'][k]['start_pos'] = k + 1
 
 
-    print('exported data is')
-    print(data[0][0])
+    #print('exported data is')
+    #print(data[0][0])
     with open('older.json', 'w') as outfile:
         json.dump(data, outfile)
 
