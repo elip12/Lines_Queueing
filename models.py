@@ -486,8 +486,8 @@ class Subsession(BaseSubsession):
             self.session.vars['pr'] = random.randrange(
                 Constants.num_rounds) + 1
 
-        # just dump header
-        self.dump_metadata()
+            # just dump header
+            self.dump_metadata()
 
         self.session.vars[self.round_number] = [{}
                                                 for i in range(len(self.get_groups()))]
