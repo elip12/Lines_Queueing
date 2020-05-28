@@ -891,8 +891,8 @@
             <div class="col-12">
                 <div class="row infobar">
                     <div class="col-2 infocol infoborder">
-                        <span v-if="block == 0"> Practice </span> Round: <br>
-                        {{ round_ }}
+                        <span v-if="block == -1"> Practice Round </span> <span v-else> Round: <br>
+                        {{ round_ }} </span> 
                     </div>
                     <div class="col-2 infocol infoborder">
                         Endowment: { endowment.toFixed(2) } <br>
@@ -902,7 +902,7 @@
                     </div>
                     <div class="col-2 infocol infoborder">
                         Mode: { displayMode() } <br>
-                        Messaging: <span v-if="messaging"> Enabled </span> <span v-else>Disabled</span> <br>
+                        Messaging: <span v-if="messaging"> Yes </span> <span v-else>No</span> <br>
                         Service Time:  { service_time[num_players_service] }s
                     </div>
 
