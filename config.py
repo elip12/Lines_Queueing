@@ -38,7 +38,6 @@ def format_data():
         for i, period in enumerate(grplist):
             plr_df = pdf[(pdf.group_id == grp) & (pdf.num_period == i + 1)]
             plr_df = plr_df.drop(['block_id', 'num_period', 'group_id', 'player_id'], axis=1)
-            plr_df['service_time'] = [plr_df['service_time'].values.tolist() for a in range(len(plr_df['service_time']))]
             grplist[i]['players'] = [*plr_df.T.to_dict().values()]
         data.append(grplist)
     return data

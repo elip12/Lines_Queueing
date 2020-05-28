@@ -29,13 +29,13 @@ class Constants(BaseConstants):
     participation_fee = c(5)
 
     config = config_py.export_data()
-    for g in config:
-        for r in g:
-            print(r['settings'])
-            for p in r['players']:
-                print(p)
-            print('\n')
-    print('CONFIG EXPORTED')
+    #for g in config:
+    #    for r in g:
+    #        print(r['settings'])
+    #        for p in r['players']:
+    #            print(p)
+    #        print('\n')
+    #print('CONFIG EXPORTED')
     num_rounds = len(config[0])
     print('NUM_ROUNDS:', num_rounds)
     num_players = sum([len(group[0]['players']) for group in config])
@@ -279,6 +279,7 @@ class Group(RedwoodGroup):
                         p1['requested'] = None
                         p2['requesting'] = None
                         p1['accepted'] = 2  # this should be unnecessary
+                        p1['bid'] = None
 
                         metadata['status'] = 'cancelled'
                         metadata['requester_pos_final'] = p2['pos']
@@ -413,10 +414,9 @@ class Group(RedwoodGroup):
                             p2['bid'] = -float(p1['bid'])
 
                         else:
-
                             # reworked double auction
                             p2['other_bid'] = p1['bid']
-                            av_bid = ( float(p1['bid']) + float(p2['bid']) ) / 2
+                            av_bid = ( float(p1['bid']) + float(p2['bid']) ) / 2 
                             p2['average_bid'] = -av_bid
                             p1['average_bid'] = av_bid
 
