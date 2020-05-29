@@ -116,6 +116,9 @@ class QueueService(Page):
         'tokens',
     ]
 
+    def is_displayed(self):
+        return self.round_number > 1
+
     def get_timeout_seconds(self):
         g_index = self.participant.vars[self.round_number]['group']
         return Constants.config[g_index][self.round_number - 1]['settings']['duration']
@@ -186,6 +189,9 @@ class QueueService(Page):
 class BetweenPages(Page):
     form_model = 'player'
     form_fields = ['time_BP']
+
+    def is_displayed(self):
+        return self.round_number > 1
 
     def vars_for_template(self):
         all_players = self.group.get_players()

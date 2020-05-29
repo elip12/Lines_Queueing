@@ -61,7 +61,7 @@
 {% endblock %}
 
 {% block title %}
-    Round {{ round }} Summary
+    Round {{ round|add":-1" }} Summary
 {% endblock %}
 
 {% block content %}
