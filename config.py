@@ -113,9 +113,9 @@ def export_data():
                 t = settings['duration']
                 for k, player in enumerate(players):
                     data[i][j]['players'][k]['service_time'] = round(t * player['k']) 
-            if 'start_pos' not in players[0]:
-                for k, _ in enumerate(players):
-                    data[i][j]['players'][k]['start_pos'] = k + 1
+            #if 'start_pos' not in players[0]:
+            #    for k, _ in enumerate(players):
+            #        data[i][j]['players'][k]['start_pos'] = k + 1
 
 
     #print('exported data is')
@@ -123,7 +123,7 @@ def export_data():
     with open('older.json', 'w') as outfile:
         json.dump(data, outfile)
 
-    return data
+    return shuffle(data)
 
 """
 example data:
