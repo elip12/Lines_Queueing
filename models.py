@@ -368,7 +368,7 @@ class Group(RedwoodGroup):
                     metadata = self.new_metadata(g_index, p2_id, p1['id'], swap_method)
                     metadata['request_timestamp'] = p2['last_trade_request']
                     timestamp = datetime.now().strftime('%s')
-                    metadata['response_timestamp'] = timestamp
+                    metadata['response_timestamp'] = int(timestamp) * 1000
 
                     # declining
                     if p1['accepted'] == 0:
