@@ -70,7 +70,7 @@
             mounted: function(){
                 setTimeout(()=>{
                     this.initialOver = true;
-                }, this.service_time[this.num_players_service] * 1000)
+                }, this.service_time * 1000)
             },
 
             data: function() {
@@ -114,7 +114,6 @@
                     discrete: {{ discrete | json}},
                     messaging: {{ messaging | json}},
                     swap_method: {{ swap_method_ | json}},
-                    tokenSwap: {{ tokenSwap | json}},
                     pay_method: {{ pay_method_ | json}},
                     start_time: null,
                     now: null,
@@ -240,7 +239,7 @@
 
                         if(this.position == 0) {
                             this.end_pos = this.num_players_service
-                            if(this.time_spent_in_front == this.service_time[this.num_players_service] - 1) {
+                            if(this.time_spent_in_front == this.service_time - 1) {
                                 this.service_color = '#28b738'
                                 this.next()
                                 time_sr()
@@ -341,7 +340,6 @@
                             g_data[p]['num_players_queue']--
                             g_data[p]['num_players_service']++
                             g_data[p]['next'] = true
-                            g_data[p]['bid'] = this.bid
                         }
 
                     }
@@ -434,7 +432,7 @@
                         else {
                             if (vm.bid != null) {
                                 vm.bid = parseFloat(vm.bid)
-                                if (vm.bid > this.bid) {
+                                if (vm.bid >= this.bid) {
                                     console.log("swap accepted")
 
                                     //3
@@ -818,7 +816,7 @@
             background-color: #fbfbfb;
         }
         .padded-row {
-            margin-top: 30px;
+            margin-top: 10px;
         }
         .service {
             background-color: #f2f2f2;
@@ -903,7 +901,7 @@
                     <div class="col-2 infocol infoborder">
                         Mode: { displayMode() } <br>
                         Messaging: <span v-if="messaging"> Yes </span> <span v-else>No</span> <br>
-                        Service Time:  { service_time[num_players_service] }s
+                        Service Time:  { service_time }s
                     </div>
 
                     <div class="col-2 infocol infoborder">
@@ -1064,7 +1062,7 @@
                                         v-if="position == 0"/>
                                     <text v-bind:x="21" y="135"
                                         v-if="position == 0">
-                                        { service_time[num_players_service] - time_spent_in_front }
+                                        { service_time - time_spent_in_front }
                                      </text>
                                 </svg>
                             </div>
@@ -1084,22 +1082,19 @@
                                         comp_pos="-2"
                                         v-bind:self_pos="position">
                                     </s-bubble>
-                                </div>
-                                <div class="row padded-row" style="height: 100px;"
-                                        v-if="num_players > 2">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
                                         comp_pos="-3"
                                         v-bind:self_pos="position">
                                     </s-bubble>
+                                </div>
+                                <div class="row padded-row" style="height: 100px;"
+                                        v-if="num_players > 3">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
                                         comp_pos="-4"
                                         v-bind:self_pos="position">
                                     </s-bubble>
-                                </div>
-                                <div class="row padded-row" style="height: 100px;"
-                                        v-if="num_players > 4">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
                                         comp_pos="-5"
@@ -1110,6 +1105,9 @@
                                         comp_pos="-6"
                                         v-bind:self_pos="position">
                                     </s-bubble>
+                                </div>
+                                <div class="row padded-row" style="height: 100px;"
+                                        v-if="num_players > 6">
                                     <s-bubble
                                         v-bind:num_players="num_players_service"
                                         comp_pos="-7"

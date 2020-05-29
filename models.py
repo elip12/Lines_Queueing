@@ -29,13 +29,13 @@ class Constants(BaseConstants):
     participation_fee = c(5)
 
     config = config_py.export_data()
-    for g in config:
-        for r in g:
-            print(r['settings'])
-            for p in r['players']:
-                print(p)
-            print('\n')
-    print('CONFIG EXPORTED')
+    #for g in config:
+    #    for r in g:
+    #        print(r['settings'])
+    #        for p in r['players']:
+    #            print(p)
+    #        print('\n')
+    #print('CONFIG EXPORTED')
     num_rounds = len(config[0])
     print('NUM_ROUNDS:', num_rounds)
     num_players = sum([len(group[0]['players']) for group in config])
@@ -105,7 +105,6 @@ class Player(BasePlayer):
     # for now will separate the two
     # method by which players swap: bid, swap, or cut
     swap_method = models.StringField()
-    tokenSwap = models.BooleanField()
     # method by which players accumulate money: gain or lose
     pay_method = models.StringField()
 
@@ -281,6 +280,7 @@ class Group(RedwoodGroup):
                         p1['requested'] = None
                         p2['requesting'] = None
                         p1['accepted'] = 2  # this should be unnecessary
+                        p1['bid'] = None
 
                         metadata['status'] = 'cancelled'
                         metadata['requester_pos_final'] = p2['pos']
@@ -415,10 +415,9 @@ class Group(RedwoodGroup):
                             p2['bid'] = -float(p1['bid'])
 
                         else:
-
                             # reworked double auction
                             p2['other_bid'] = p1['bid']
-                            av_bid = ( float(p1['bid']) + float(p2['bid']) ) / 2
+                            av_bid = ( float(p1['bid']) + float(p2['bid']) ) / 2 
                             p2['average_bid'] = -av_bid
                             p1['average_bid'] = av_bid
 
@@ -489,14 +488,13 @@ class Subsession(BaseSubsession):
             self.session.vars['pr'] = random.randrange(
                 Constants.num_rounds) + 1
 
-        # just dump header
-        self.dump_metadata()
+            # just dump header
+            self.dump_metadata()
 
         self.session.vars[self.round_number] = [{}
                                                 for i in range(len(self.get_groups()))]
         for g_index, g in enumerate(self.get_groups()):
             g_data = Constants.config[g_index][self.round_number - 1]['players']
-
             # sets up each player's starting values
             for p in g.get_players():
                 p.participant.vars[self.round_number] = {}
