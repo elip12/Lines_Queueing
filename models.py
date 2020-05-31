@@ -370,8 +370,10 @@ class Group(RedwoodGroup):
                     metadata = self.new_metadata(g_index, p2_id, p1['id'], swap_method)
                     metadata['request_timestamp'] = p2['last_trade_request']
                     timestamp = datetime.now().strftime('%s')
-                    metadata['response_timestamp'] = timestamp
+                    metadata['response_timestamp'] = int(timestamp) * 1000
 
+                    metadata['requester_bid'] = p2.get('bid', 'N/A')
+                    metadata['requestee_bid'] = p1.get('bid', 'N/A')
                     # declining
                     if p1['accepted'] == 0:
                         p1['in_trade'] = False
@@ -429,8 +431,6 @@ class Group(RedwoodGroup):
                     if message == '':
                         message = 'N/A'
                     metadata['message'] = message
-                    metadata['requester_bid'] = p2['bid']
-                    metadata['requestee_bid'] = p1['bid']
                     metadata['transaction_price'] = p1.get('average_bid', 'N/A')
                     p2['last_trade_request'] = None
                     event.value[p2_id] = p2
