@@ -25,22 +25,22 @@
                     console.log("cool")
                     console.log(displayed)
 
-                    if(data[action]['requester'] == this.id){
+                    if(data[action]['requester_id'] == this.id){
                         console.log("fdfdf")
                         displayed.push({
                             from: "You",
-                            to: `Player ${data[action].requestee}`,
+                            to: `Player ${data[action].requestee_id}`,
                             status: data[action].status,
-                            amount: data[action].bid,
+                            amount: data[action].transaction_price,
                             message: data[action].message
                         })
                     }
-                    else if(data[action]['requestee'] == this.id){
+                    else if(data[action]['requestee_id'] == this.id){
                         displayed.push({
-                            from: `Player ${data[action].requestee}`,
+                            from: `Player ${data[action].requestee_id}`,
                             to: "You",
                             status: data[action].status,
-                            amount: data[action].bid,
+                            amount: data[action].transaction_price,
                             message: data[action].message
                         })
 
@@ -61,7 +61,7 @@
 {% endblock %}
 
 {% block title %}
-    Round {{ round|add":-1" }} Summary
+    Round {{ round|add:"-1" }} Summary
 {% endblock %}
 
 {% block content %}

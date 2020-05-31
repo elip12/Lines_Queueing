@@ -63,8 +63,7 @@ class PracticeRound(Page):
             'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'duration'
             ],
-            'block_': -1,
-            # 'block_': Constants.config[g_index][self.round_number - 1]['settings']['block_id'],
+            'block_': Constants.config[g_index][self.round_number - 1]['settings']['block_id'],
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'c_': self.participant.vars[self.round_number]['c'],
             'service_time_': self.participant.vars[self.round_number]['service_time'],
@@ -91,6 +90,8 @@ class PracticeRound(Page):
             self.player.set_payoffs()
 
 class QueueServiceWaitPage(WaitPage):
+    def is_displayed(self):
+        return self.round_number > 1
     pass
 
 
@@ -195,15 +196,20 @@ class BetweenPages(Page):
 
     def vars_for_template(self):
         all_players = self.group.get_players()
-        # print('len of all_players is: ', len(all_players))
-        # print('all_players is: ', all_players)
 
+        startLine = {}
         endLine = {}
-        displayStartLine = []
 
         for p in all_players:
-            # print('p.start_pos is: ', p.start_pos)
-            endLine[str(p.start_pos)] = p.id_in_group
+            startLine[str(p.start_pos)] = p.id_in_group
+            endLine[str(p.end_pos)] = p.id_in_group
+            print(p)
+
+        # print('START: ', startLine)
+        # print('END: ', endLine)
+
+        displayStartLine = [startLine[key] for key in sorted(startLine)]
+        displayEndLine = [endLine[key] for key in sorted(endLine)]
 
         self.participant.vars[self.round_number]['tokens'] = self.player.tokens
 
@@ -219,7 +225,8 @@ class BetweenPages(Page):
 
         return {
             'round': self.round_number,
-            'endLine': sorted(endLine),
+            'startLine': displayStartLine,
+            'endLine': displayEndLine,
             'numPlayers': len(all_players),
             'id': self.player.id_in_group,
             'tokens': self.player.tokens,
@@ -230,6 +237,8 @@ class BetweenPages(Page):
 
 
 class AfterService(WaitPage):
+    def is_displayed(self):
+        return self.round_number > 1
     def after_all_players_arrive(self):
         self.group.cache = 'N/A'
 

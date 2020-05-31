@@ -47,7 +47,7 @@ class Constants(BaseConstants):
 
     print('PLAYERS PER GROUP: ', players_per_group)
 
-    payoff_round_number = random.randint(1, num_rounds)
+    payoff_round_number = random.randint(2, num_rounds)
 
     #players_per_group = 4
 
