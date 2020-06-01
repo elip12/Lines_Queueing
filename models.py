@@ -431,7 +431,12 @@ class Group(RedwoodGroup):
                     if message == '':
                         message = 'N/A'
                     metadata['message'] = message
-                    metadata['transaction_price'] = p1.get('average_bid', 'N/A')
+                    if swap_method == 'take/Leave':
+                        metadata['transaction_price'] = p1.get('bid')
+                    elif swap_method == 'double':
+                        metadata['transaction_price'] = p1.get('average_bid')
+                    else:
+                        metadata['transaction_price'] = 'N/A'
                     p2['last_trade_request'] = None
                     event.value[p2_id] = p2
                     event.value[str(p.id_in_group)] = p1

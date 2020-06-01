@@ -14,7 +14,10 @@
             sent: [],
             received: [],
             id: {{ id }},
-            displayed: []
+            displayed: [],
+            startLine: {{ startLine | json }},
+            endLine: {{ endLine | json }},
+            roundPayoff: {{ roundpayoff | json }}
 
             
         },
@@ -36,6 +39,7 @@
                         })
                     }
                     else if(data[action]['requestee_id'] == this.id){
+                        console.log("joe mama")
                         displayed.push({
                             from: `Player ${data[action].requestee_id}`,
                             to: "You",
@@ -53,7 +57,9 @@
 
         },
         mounted: function(){
-            this.history = JSON.parse(this.history)
+            console.log("MOUNTED")
+            console.log(this.history)
+            // this.history = JSON.parse(this.history)
             this.parseHistory(this.history, this.displayed)
         }
     })
@@ -87,12 +93,21 @@
             <td> {( action.message )} </td>
             <td> {( action.status )} </td>
         </tr>
-        
-    
-    
     </table>
-    
-    
+
+    <table class="table">
+        <tr>
+            <th>Start Line</th>
+            <th>Final Line</th>
+            <th>Round Payoff</th>
+        </tr>
+        <tr v-for="line positions">
+            <td> Back {( startLine )} Front </td>
+            <td> Back {( endLine )} Front </td>
+            <td> {( roundPayoff )} </td>
+        </tr>
+    </table>
+
     
     </div>
 

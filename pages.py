@@ -1,8 +1,8 @@
 from ._builtin import Page, WaitPage
 from .models import Constants
 import json
-import os
 from datetime import datetime
+import pandas as pd
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 """
@@ -92,6 +92,8 @@ class PracticeRound(Page):
 class QueueServiceWaitPage(WaitPage):
     def is_displayed(self):
         return self.round_number > 1
+    def after_all_players_arrive(self):
+        self.group.cache = 'N/A'
     pass
 
 
@@ -195,23 +197,40 @@ class BetweenPages(Page):
         return self.round_number > 1
 
     def vars_for_template(self):
-        all_players = self.group.get_players()
+        g_index = self.participant.vars[self.round_number]['group']
 
-        startLine = {}
-        endLine = {}
+        start = {}
+        # {id: start_pos}
+        for player_id in range(1, Constants.players_per_group + 1):
+            player = self.group.get_player_by_id(player_id)
+            # since p_data in session vars doesn't change from starting pos
+            start[player_id] = self.session.vars[self.round_number][g_index][player_id]['pos']
+        # sorted by value (start_pos/pos)
+        start = {k: v for k, v in sorted(start.items(), key=lambda item: item[1])}
+        # dict_keys of list of id's in starting line order
+        # first element is first player id
+        startLine = start.keys()
 
-        for p in all_players:
-            startLine[str(p.start_pos)] = p.id_in_group
-            endLine[str(p.end_pos)] = p.id_in_group
-            print(p)
-
-        # print('START: ', startLine)
-        # print('END: ', endLine)
-
-        displayStartLine = [startLine[key] for key in sorted(startLine)]
-        displayEndLine = [endLine[key] for key in sorted(endLine)]
+        # the last cache data
+        endLine = self.group.queue_state(self.group.cache)
 
         self.participant.vars[self.round_number]['tokens'] = self.player.tokens
+
+        fname = self.session.vars['data_fname'] + '_metadata.csv'
+        data = pd.read_csv(fname)
+
+        history = {}
+
+        # gets all transactions from round that just occurred
+        past_round = data.loc[(data['round'] == self.round_number) & (pd.isnull(data['status']) == False)]
+        for row_index in range(1, len(past_round) + 1):
+            current_row = past_round.loc[[row_index]]
+            history[row_index] = {}
+            history[row_index]['requestee_id'] = int(current_row['requestee_id'][1])
+            history[row_index]['requester_id'] = int(current_row['requester_id'][1])
+            history[row_index]['status'] = current_row['status'][1]
+            history[row_index]['transaction_price'] = float(current_row['transaction_price'][1])
+            history[row_index]['message'] = current_row['message'][1]
 
         """
 
@@ -225,9 +244,13 @@ class BetweenPages(Page):
 
         return {
             'round': self.round_number,
-            'startLine': displayStartLine,
-            'endLine': displayEndLine,
-            'numPlayers': len(all_players),
+            # lists are reversed to match the layout of line
+            # [1,2,3,4]
+            # player 4 is first, 3 is second, 2 is third, 1 is last
+            'startLine': [a for a in reversed(list(startLine))],
+            'endLine': [a for a in reversed(endLine)],
+            'numPlayers': Constants.players_per_group,
+            'history': history,
             'id': self.player.id_in_group,
             'tokens': self.player.tokens,
             'roundpayoff': self.player.round_payoff,
@@ -239,8 +262,6 @@ class BetweenPages(Page):
 class AfterService(WaitPage):
     def is_displayed(self):
         return self.round_number > 1
-    def after_all_players_arrive(self):
-        self.group.cache = 'N/A'
 
 # displays experiment results. Has no specific data set yet.
 class Results(Page):
