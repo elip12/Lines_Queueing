@@ -7,6 +7,61 @@
         {
             document.getElementById("arrive_time").value = (new Date()).toISOString();
         }
+        var app = new Vue({
+        el: '#app',
+        data: {
+            history: {{ history | json }},
+            sent: [],
+            received: [],
+            id: {{ id }},
+            displayed: [],
+            payoffRound: {{ payoffRound | json }},
+            payoffAmount: {{ payoffAmount | json }}
+
+            
+        },
+        delimiters: ["{(", ")}"],
+        methods: {
+            parseHistory: function(data, displayed){
+                for(let action in data){
+                    console.log("cool")
+                    console.log(displayed)
+
+                    if(data[action]['requester_id'] == this.id){
+                        console.log("fdfdf")
+                        displayed.push({
+                            from: "You",
+                            to: `Player ${data[action].requestee_id}`,
+                            status: data[action].status,
+                            amount: data[action].transaction_price,
+                            message: data[action].message
+                        })
+                    }
+                    else if(data[action]['requestee_id'] == this.id){
+                        console.log("joe mama")
+                        displayed.push({
+                            from: `Player ${data[action].requestee_id}`,
+                            to: "You",
+                            status: data[action].status,
+                            amount: data[action].transaction_price,
+                            message: data[action].message
+                        })
+
+                    }
+                 
+                }
+                
+            }
+            
+
+        },
+        mounted: function(){
+            console.log("MOUNTED")
+            console.log(this.history)
+            // this.history = JSON.parse(this.history)
+            this.parseHistory(this.history, this.displayed)
+        }
+    })
     </script>
 {% endblock %}
 
@@ -18,11 +73,40 @@
     
     <!-- form field for page load time. Value attribute gets set by script on window load,
         and the form gets returned here -->
-    <input type="hidden" name="time_Results" id="arrive_time"/>
+    <input type="hidden" name="time_BP" id="arrive_time"/>
     
-    <p>
-        Some results here
-    </p>
+    <div id="app">
+
+    <table class="table">
+        <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Amount</th>
+            <th>Message</th>
+            <th>Result</th>
+        </tr>
+        <tr v-for="action in displayed">
+            <td> {( action.from )} </td>
+            <td> {( action.to )} </td>
+            <td> {( action.amount )} </td>
+            <td> {( action.message )} </td>
+            <td> {( action.status )} </td>
+        </tr>
+    </table>
+
+    <table class="table">
+        <tr>
+            <th>Payoff Round</th>
+            <th>Payoff Amount</th>
+        </tr>
+        <tr v-for="line positions">
+            <td> Round {( payoffRound )} </td>
+            <td> {( payoffAmount )} </td>
+        </tr>
+    </table>
+
+    
+    </div>
 
     {% next_button %}
 

@@ -92,8 +92,6 @@ class PracticeRound(Page):
 class QueueServiceWaitPage(WaitPage):
     def is_displayed(self):
         return self.round_number > 1
-    def after_all_players_arrive(self):
-        self.group.cache = 'N/A'
     pass
 
 
@@ -258,6 +256,8 @@ class BetweenPages(Page):
             'Asdf': self.group.get_players
         }
 
+    # def before_next_page(self):
+    #     self.group.cache = 'N/A'
 
 class AfterService(WaitPage):
     def is_displayed(self):
@@ -269,7 +269,24 @@ class Results(Page):
     form_fields = ['time_Results']
 
     def vars_for_template(self):
-        return {}
+
+        history = {}
+
+        all_hist = data.loc[(pd.isnull(data['status']) == False)]
+        for row_index in range(1, len(past_round) + 1):
+            current_row = past_round.loc[[row_index]]
+            history[row_index] = {}
+            history[row_index]['requestee_id'] = int(current_row['requestee_id'][1])
+            history[row_index]['requester_id'] = int(current_row['requester_id'][1])
+            history[row_index]['status'] = current_row['status'][1]
+            history[row_index]['transaction_price'] = float(current_row['transaction_price'][1])
+            history[row_index]['message'] = current_row['message'][1]
+
+        return {
+            'history': history,
+            'payoffRound': Constants.payoff_round_number,
+            'payoffAmount': self.participant.payoff
+        }
 
     def is_displayed(self):
         return self.round_number == Constants.num_rounds
