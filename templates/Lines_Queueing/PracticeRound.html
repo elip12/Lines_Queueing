@@ -70,7 +70,7 @@
             mounted: function(){
                 setTimeout(()=>{
                     this.initialOver = true;
-                }, this.service_time * 1000)
+                }, this.first_time * 1000)
             },
 
             data: function() {
@@ -111,6 +111,7 @@
 
                     //group data
                     service_color: '#545353',
+                    first_time: {{ first_time_ | json }},
                     discrete: {{ discrete | json}},
                     messaging: {{ messaging | json}},
                     swap_method: {{ swap_method_ | json}},
@@ -890,7 +891,7 @@
                 <div class="row infobar">
                     <div class="col-2 infocol infoborder">
                         <span v-if="block == 0"> Practice Round </span> <span v-else> Round: <br>
-                        {{ round_ }} </span> 
+                        {{ round_|add:"-1" }} </span> 
                     </div>
                     <div class="col-2 infocol infoborder">
                         Endowment: { endowment.toFixed(2) } <br>

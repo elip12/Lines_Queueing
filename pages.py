@@ -59,10 +59,17 @@ class PracticeRound(Page):
 
                 self.player.tokens = 0
 
+        total_service_time = 0
+        players = Constants.config[g_index][self.round_number - 1]['players']
+        for p in players:
+            total_service_time += p['service_time']
+
         return {
             'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'duration'
             ],
+            'first_time_': int(Constants.config[g_index][self.round_number - 1]['settings']['duration'] -
+                total_service_time),
             'block_': Constants.config[g_index][self.round_number - 1]['settings']['block_id'],
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'c_': self.participant.vars[self.round_number]['c'],
@@ -155,12 +162,17 @@ class QueueService(Page):
 
                 self.player.tokens = 0
 
+        total_service_time = 0
+        players = Constants.config[g_index][self.round_number - 1]['players']
+        for p in players:
+            total_service_time += p['service_time']
+
         return {
             'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'duration'
             ],
-            'first_time_': Constants.config[g_index][self.round_number - 1]['settings']['duration'] -
-                sum(Constants.config[g_index][self.round_number - 1]['players']['service_time']),
+            'first_time_': int(Constants.config[g_index][self.round_number - 1]['settings']['duration'] -
+                total_service_time),
             'block_': Constants.config[g_index][self.round_number - 1]['settings']['block_id'],
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'c_': self.participant.vars[self.round_number]['c'],
