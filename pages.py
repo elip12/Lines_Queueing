@@ -235,14 +235,14 @@ class BetweenPages(Page):
 
         # gets all transactions from round that just occurred
         past_round = data.loc[(data['round'] == self.round_number) & (pd.isnull(data['status']) == False)]
-        for row_index in range(1, len(past_round) + 1):
-            current_row = past_round.loc[[row_index]]
+        for row_index in range(len(past_round)):
+            current_row = past_round.iloc[[row_index]]
             history[row_index] = {}
-            history[row_index]['requestee_id'] = int(current_row['requestee_id'][1])
-            history[row_index]['requester_id'] = int(current_row['requester_id'][1])
-            history[row_index]['status'] = current_row['status'][1]
-            history[row_index]['transaction_price'] = float(current_row['transaction_price'][1])
-            history[row_index]['message'] = current_row['message'][1]
+            history[row_index]['requestee_id'] = int(current_row['requestee_id'])
+            history[row_index]['requester_id'] = int(current_row['requester_id'])
+            history[row_index]['status'] = current_row['status'].iloc[0]
+            history[row_index]['transaction_price'] = float(current_row['transaction_price'])
+            history[row_index]['message'] = current_row['message'].iloc[0]
 
         """
 
@@ -277,29 +277,16 @@ class AfterService(WaitPage):
     def is_displayed(self):
         return self.round_number > 1
 
-# displays experiment results. Has no specific data set yet.
+# displays experiment results
 class Results(Page):
     form_model = 'player'
     form_fields = ['time_Results']
 
     def vars_for_template(self):
 
-        history = {}
-
-        all_hist = data.loc[(pd.isnull(data['status']) == False)]
-        for row_index in range(1, len(past_round) + 1):
-            current_row = past_round.loc[[row_index]]
-            history[row_index] = {}
-            history[row_index]['requestee_id'] = int(current_row['requestee_id'][1])
-            history[row_index]['requester_id'] = int(current_row['requester_id'][1])
-            history[row_index]['status'] = current_row['status'][1]
-            history[row_index]['transaction_price'] = float(current_row['transaction_price'][1])
-            history[row_index]['message'] = current_row['message'][1]
-
         return {
-            'history': history,
             'payoffRound': Constants.payoff_round_number,
-            'payoffAmount': self.participant.payoff
+            'payoffAmount': float(self.participant.payoff).toFixed(2)
         }
 
     def is_displayed(self):
