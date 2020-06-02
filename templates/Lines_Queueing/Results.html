@@ -7,14 +7,6 @@
         {
             document.getElementById("arrive_time").value = (new Date()).toISOString();
         }
-        var app = new Vue({
-        el: '#app',
-        data: {
-            payoffRound: {{ payoffRound | json }},
-            payoffAmount: {{ payoffAmount | json }}
-        },
-        delimiters: ["{(", ")}"],
-    })
     </script>
 {% endblock %}
 
@@ -36,8 +28,8 @@
             <th>Payoff Amount</th>
         </tr>
         <tr v-for="payoff round">
-            <td> Round {( payoffRound )} </td>
-            <td> {( payoffAmount )} </td>
+            <td> Round {{ payoffRound }} </td>
+            <td> {{ payoffAmount }} </td>
         </tr>
     </table>
 

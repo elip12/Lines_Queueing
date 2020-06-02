@@ -101,6 +101,11 @@ class QueueServiceWaitPage(WaitPage):
         return self.round_number > 1
     pass
 
+class PracticeRoundWaitPage(WaitPage):
+    def is_displayed(self):
+        return self.round_number == 1
+    pass
+
 
 # queue room and service room. Because of otree-redwood's period_length
 # requirement, and because the total time in both rooms is set but the time
@@ -206,7 +211,7 @@ class BetweenPages(Page):
     form_fields = ['time_BP']
 
     def is_displayed(self):
-        return self.round_number > 1
+        return self.round_number >= 1
 
     def vars_for_template(self):
         g_index = self.participant.vars[self.round_number]['group']
@@ -275,7 +280,7 @@ class BetweenPages(Page):
 
 class AfterService(WaitPage):
     def is_displayed(self):
-        return self.round_number > 1
+        return self.round_number >= 1
 
 # displays experiment results
 class Results(Page):
@@ -297,6 +302,7 @@ class Results(Page):
 # can override this, and not all pages defined above need to be included
 page_sequence = [
 #    Instructions,
+    PracticeRoundWaitPage,
     PracticeRound,
     QueueServiceWaitPage,
     QueueService,
