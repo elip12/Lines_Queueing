@@ -159,6 +159,8 @@ class QueueService(Page):
             'round_time_': Constants.config[g_index][self.round_number - 1]['settings'][
                 'duration'
             ],
+            'first_time_': Constants.config[g_index][self.round_number - 1]['settings']['duration'] -
+                sum(Constants.config[g_index][self.round_number - 1]['players']['service_time']),
             'block_': Constants.config[g_index][self.round_number - 1]['settings']['block_id'],
             'pay_rate_': self.participant.vars[self.round_number]['pay_rate'],
             'c_': self.participant.vars[self.round_number]['c'],
