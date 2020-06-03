@@ -14,7 +14,10 @@
             sent: [],
             received: [],
             id: {{ id }},
-            displayed: []
+            displayed: [],
+            startLine: {{ startLine | json }},
+            endLine: {{ endLine | json }},
+            roundPayoff: {{ roundpayoff | json }}
 
             
         },
@@ -25,22 +28,23 @@
                     console.log("cool")
                     console.log(displayed)
 
-                    if(data[action]['requester'] == this.id){
+                    if(data[action]['requester_id'] == this.id){
                         console.log("fdfdf")
                         displayed.push({
                             from: "You",
-                            to: `Player ${data[action].requestee}`,
+                            to: `Player ${data[action].requestee_id}`,
                             status: data[action].status,
-                            amount: data[action].bid,
+                            amount: data[action].transaction_price,
                             message: data[action].message
                         })
                     }
-                    else if(data[action]['requestee'] == this.id){
+                    else if(data[action]['requestee_id'] == this.id){
+                        console.log("joe mama")
                         displayed.push({
-                            from: `Player ${data[action].requestee}`,
+                            from: `Player ${data[action].requestee_id}`,
                             to: "You",
                             status: data[action].status,
-                            amount: data[action].bid,
+                            amount: data[action].transaction_price,
                             message: data[action].message
                         })
 
@@ -53,7 +57,9 @@
 
         },
         mounted: function(){
-            this.history = JSON.parse(this.history)
+            console.log("MOUNTED")
+            console.log(this.history)
+            // this.history = JSON.parse(this.history)
             this.parseHistory(this.history, this.displayed)
         }
     })
@@ -61,7 +67,7 @@
 {% endblock %}
 
 {% block title %}
-    Round {{ round }} Summary
+    Round {{ round|add:"-1" }} Summary
 {% endblock %}
 
 {% block content %}
@@ -87,12 +93,23 @@
             <td> {( action.message )} </td>
             <td> {( action.status )} </td>
         </tr>
-        
-    
-    
     </table>
-    
-    
+
+    <table class="table">
+        <tr>
+            <th> </th>
+            <th>Start Line</th>
+            <th>Final Line</th>
+            <th>Round Payoff</th>
+        </tr>
+        <tr v-for="line positions">
+            <td> Front <br> <br> <br> Back </td>
+            <td> {( startLine[0] )} <br> {( startLine[1] )} <br> {( startLine[2] )} <br> {( startLine[3] )} </td>
+            <td> {( endLine[0] )} <br> {( endLine[1] )} <br> {( endLine[2] )} <br> {( endLine[3] )} </td>
+            <td> {( roundPayoff )} </td>
+        </tr>
+    </table>
+
     
     </div>
 
