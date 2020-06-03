@@ -47,8 +47,6 @@ class Constants(BaseConstants):
 
     print('PLAYERS PER GROUP: ', players_per_group)
 
-    payoff_round_number = random.randint(2, num_rounds)
-
     #players_per_group = 4
 
     # these will be displayed to players in the UI. Defined here for consistency and
@@ -490,8 +488,7 @@ class Subsession(BaseSubsession):
             self.session.vars['metadata_requests'] = {}
             self.session.vars['data_fname'] = data_fname
 
-            self.session.vars['pr'] = random.randrange(
-                Constants.num_rounds) + 1
+            self.session.vars['pr'] = random.randint(2, Constants.num_rounds)
 
             # just dump header
             self.dump_metadata()
