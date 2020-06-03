@@ -8,6 +8,10 @@ Eli Pandolfo <epandolf@ucsc.edu>
 """
 
 
+class Welcome(Page):
+    def is_displayed(self):
+        return self.round_number == 1
+
 class Instructions(Page):
 
     form_model = 'player'
@@ -302,6 +306,7 @@ class Results(Page):
 # can override this, and not all pages defined above need to be included
 page_sequence = [
 #    Instructions,
+    Welcome,
     PracticeRoundWaitPage,
     PracticeRound,
     QueueServiceWaitPage,
