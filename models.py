@@ -167,8 +167,10 @@ class Group(RedwoodGroup):
         m['requestee_pos_init'] = 'N/A'
         m['requestee_pos_final'] = 'N/A'
         m['requestee_bid'] = 'N/A'
-        m['request_timestamp'] = 'N/A'
-        m['response_timestamp'] = 'N/A'
+        m['request_timestamp_absolute'] = 'N/A'
+        m['response_timestamp_absolute'] = 'N/A'
+        m['request_timestamp_relative'] = 'N/A'
+        m['response_timestamp_relative'] = 'N/A'
         m['swap_method'] = swap_method
         m['status'] = 'N/A'
         m['message'] = 'N/A'
@@ -229,6 +231,8 @@ class Group(RedwoodGroup):
     """
 
     def _on_swap_event(self, event=None, **kwargs):
+        duration = self.period_length()
+        start_time = event.value['start_time']
         # updates states of all players involved in the most recent event that triggered this
         # method call
         for p in self.get_players():
@@ -271,7 +275,7 @@ class Group(RedwoodGroup):
                         p2_id = str(p1['requested'])
                         p2 = event.value[p2_id]
                         metadata = self.new_metadata(g_index, p2['id'], p1['id'], swap_method)
-                        metadata['request_timestamp'] = p2['last_trade_request']
+                        metadata['request_timestamp_absolute'] = p2['last_trade_request']
 
                         p1['in_trade'] = False
                         p2['in_trade'] = False
@@ -284,12 +288,12 @@ class Group(RedwoodGroup):
                         metadata['requester_pos_final'] = p2['pos']
                         metadata['requestee_pos_final'] = p1['pos']
                         timestamp = datetime.now().strftime('%s')
-                        metadata['response_timestamp'] = timestamp
+                        metadata['response_timestamp_absolute'] = timestamp
                         p2['last_trade_request'] = None
                         event.value[p2_id] = p2
                         event.value[str(p.id_in_group)] = p1
                         #metadata['queue'] = self.queue_state(event.value)
-                        self.subsession.dump_metadata(metadata)
+                        self.subsession.dump_metadata(duration, start_time, metadata)
                 # service_other
                 elif p1['pos'] > 0:
                     # this is the only case I know of where you can get the same alert twice in a row (except none)
@@ -310,7 +314,7 @@ class Group(RedwoodGroup):
                 metadata['requester_pos_init'] = p1['pos']
                 metadata['requestee_pos_init'] = p2['pos']
                 timestamp = p1['last_trade_request']
-                metadata['request_timestamp'] = timestamp
+                metadata['request_timestamp_absolute'] = timestamp
                 if swap_method == 'cut':
                     temp = p2['pos']
                     for i in event.value:
@@ -332,7 +336,7 @@ class Group(RedwoodGroup):
                     p1['requesting'] = None
                     p1['last_trade_request'] = None
                     event.value[str(p.id_in_group)] = p1
-                    self.subsession.dump_metadata(metadata)
+                    self.subsession.dump_metadata(duration, start_time, metadata)
                 else:
                     # requesting_clean
                     if not p2['in_trade']:
@@ -353,7 +357,7 @@ class Group(RedwoodGroup):
                         p1['alert'] = Constants.alert_messages['requesting']
                         p2['alert'] = Constants.alert_messages['requested']
                         event.value[str(p1['requesting'])] = p2
-                        self.subsession.dump_metadata(metadata)
+                        self.subsession.dump_metadata(duration, start_time, metadata)
                     # requesting_dirty; the js should prevent the logic from ever reaching this
                     else:
                         p1['requesting'] = None
@@ -366,9 +370,9 @@ class Group(RedwoodGroup):
                     p2_id = str(p1['requested'])
                     p2 = event.value[p2_id]
                     metadata = self.new_metadata(g_index, p2_id, p1['id'], swap_method)
-                    metadata['request_timestamp'] = p2['last_trade_request']
+                    metadata['request_timestamp_absolute'] = p2['last_trade_request']
                     timestamp = datetime.now().strftime('%s')
-                    metadata['response_timestamp'] = int(timestamp) * 1000
+                    metadata['response_timestamp_absolute'] = int(timestamp) * 1000
 
                     metadata['requester_bid'] = p2.get('bid', 'N/A')
                     metadata['requestee_bid'] = p1.get('bid', 'N/A')
@@ -438,7 +442,7 @@ class Group(RedwoodGroup):
                     p2['last_trade_request'] = None
                     event.value[p2_id] = p2
                     event.value[str(p.id_in_group)] = p1
-                    self.subsession.dump_metadata(metadata)
+                    self.subsession.dump_metadata(duration, start_time, metadata)
 
             event.value[str(p.id_in_group)] = p1  # partially redundant
         
@@ -451,7 +455,7 @@ class Group(RedwoodGroup):
 
 class Subsession(BaseSubsession):
     
-    def dump_metadata(self, metadata=None):
+    def dump_metadata(self, duration=None, start_time=None, metadata=None):
         if metadata == None:
             s = ','.join([
                 'subsession_id',
@@ -465,21 +469,28 @@ class Subsession(BaseSubsession):
                 'requestee_pos_init',
                 'requestee_pos_final',
                 'requestee_bid',
-                'request_timestamp',
-                'response_timestamp',
+                'request_timestamp_absolute',
+                'response_timestamp_absolute',
+                'request_timestamp_relative',
+                'response_timestamp_relative',
                 'swap_method',
                 'status',
                 'message',
                 'transaction_price',
             ])
         else:
+            if metadata['request_timestamp_absolute'] != 'N/A':
+                metadata['request_timestamp_relative'] = \
+                    int(metadata['request_timestamp_absolute']/ 1000) - start_time
+            if metadata['response_timestamp_absolute'] != 'N/A':
+                metadata['response_timestamp_relative'] = \
+                    int(metadata['response_timestamp_absolute']/ 1000) - start_time
             strvals = (str(e) for e in metadata.values())
             s = ','.join(strvals)
         fname = self.session.vars['data_fname'] + '_metadata.csv'
         with open(fname, 'a+') as f:
             f.write(s + '\n')
 
-    
     def creating_session(self):
         if self.round_number == 1:
 

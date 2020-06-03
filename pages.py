@@ -97,7 +97,7 @@ class PracticeRound(Page):
         }
 
     def before_next_page(self):
-        if self.round_number == Constants.payoff_round_number:
+        if self.round_number == self.session.vars['pr']:
             self.player.set_payoffs()
 
 class QueueServiceWaitPage(WaitPage):
@@ -306,7 +306,7 @@ class Results(Page):
 # can override this, and not all pages defined above need to be included
 page_sequence = [
 #    Instructions,
-    Welcome,
+#    Welcome,
     PracticeRoundWaitPage,
     PracticeRound,
     QueueServiceWaitPage,
