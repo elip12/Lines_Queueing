@@ -291,7 +291,7 @@ class Results(Page):
 
         return {
             'payoffRound': Constants.payoff_round_number,
-            'payoffAmount': float(self.participant.payoff).toFixed(2)
+            'payoffAmount': self.participant.payoff
         }
 
     def is_displayed(self):
