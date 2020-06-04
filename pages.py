@@ -243,7 +243,8 @@ class BetweenPages(Page):
         history = {}
 
         # gets all transactions from round that just occurred
-        past_round = data.loc[(data['round'] == self.round_number) & (pd.isnull(data['status']) == False)]
+        past_round = data.loc[(data['round'] == self.round_number) & (pd.isnull(data['status']) == False) &
+                (data['group_id'] == g_index)]
         for row_index in range(len(past_round)):
             current_row = past_round.iloc[[row_index]]
             history[row_index] = {}
@@ -306,7 +307,7 @@ class Results(Page):
 # can override this, and not all pages defined above need to be included
 page_sequence = [
 #    Instructions,
-#    Welcome,
+    Welcome,
     PracticeRoundWaitPage,
     PracticeRound,
     QueueServiceWaitPage,

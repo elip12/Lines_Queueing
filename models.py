@@ -504,6 +504,8 @@ class Subsession(BaseSubsession):
             # just dump header
             self.dump_metadata()
 
+        self.group_randomly()
+
         self.session.vars[self.round_number] = [{}
                                                 for i in range(len(self.get_groups()))]
         for g_index, g in enumerate(self.get_groups()):
@@ -544,7 +546,6 @@ class Subsession(BaseSubsession):
                 }
 
                 self.session.vars[self.round_number][g_index][p.id_in_group] = p_data
-        self.group_randomly()
 
 """
 metadata structure:
