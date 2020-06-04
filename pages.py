@@ -205,7 +205,7 @@ class QueueService(Page):
         }
 
     def before_next_page(self):
-        if self.round_number == Constants.payoff_round_number:
+        if self.round_number == self.session.vars['pr']:
             self.player.set_payoffs()
 
 
@@ -251,7 +251,7 @@ class BetweenPages(Page):
             history[row_index]['requestee_id'] = int(current_row['requestee_id'])
             history[row_index]['requester_id'] = int(current_row['requester_id'])
             history[row_index]['status'] = current_row['status'].iloc[0]
-            history[row_index]['transaction_price'] = float(current_row['transaction_price'])
+            history[row_index]['transaction_price'] = 0.0 #float(current_row['transaction_price']) if current_row['transaction_price'] != 'None' else 0.0
             history[row_index]['message'] = current_row['message'].iloc[0]
 
         """

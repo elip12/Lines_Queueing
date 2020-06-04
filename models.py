@@ -481,10 +481,10 @@ class Subsession(BaseSubsession):
         else:
             if metadata['request_timestamp_absolute'] != 'N/A':
                 metadata['request_timestamp_relative'] = \
-                    int(metadata['request_timestamp_absolute']/ 1000) - start_time
+                    int(metadata['request_timestamp_absolute']) / 1000 - start_time
             if metadata['response_timestamp_absolute'] != 'N/A':
                 metadata['response_timestamp_relative'] = \
-                    int(metadata['response_timestamp_absolute']/ 1000) - start_time
+                    int(metadata['response_timestamp_absolute']) / 1000 - start_time
             strvals = (str(e) for e in metadata.values())
             s = ','.join(strvals)
         fname = self.session.vars['data_fname'] + '_metadata.csv'
