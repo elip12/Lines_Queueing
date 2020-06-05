@@ -167,7 +167,12 @@
             computed: {
                 // everytime this.now changes (once per second), this function is called
                 time_remaining_period: function() {
-                    return this.period_length - (this.now - this.start_time)
+                    if((this.period_length - (this.now - this.start_time)) > 0) {
+                        return this.period_length - (this.now - this.start_time)
+                    }
+                    else {
+                        return 0
+                    }
                 },
                 h: function() {
                     return this.num_players > 6 ? window.innerHeight : window.innerHeight * 0.55

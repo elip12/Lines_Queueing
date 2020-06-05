@@ -3,6 +3,7 @@ from .models import Constants
 import json
 from datetime import datetime
 import pandas as pd
+import numpy as np
 """
 Eli Pandolfo <epandolf@ucsc.edu>
 """
@@ -251,7 +252,11 @@ class BetweenPages(Page):
             history[row_index]['requestee_id'] = int(current_row['requestee_id'])
             history[row_index]['requester_id'] = int(current_row['requester_id'])
             history[row_index]['status'] = current_row['status'].iloc[0]
-            history[row_index]['transaction_price'] = float(current_row['transaction_price'])
+            transaction = current_row['transaction_price'].values[0]
+            if transaction == None or transaction == 'N/A' or np.isnan(transaction) == True:
+                history[row_index]['transaction_price'] = 0.0
+            else:
+                history[row_index]['transaction_price'] = float(current_row['transaction_price'])
             history[row_index]['message'] = current_row['message'].iloc[0]
 
         """
