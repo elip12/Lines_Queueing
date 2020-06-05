@@ -599,11 +599,11 @@
             disabled>Bid</button>
 
         <input v-if="bid_clicked && comp_pos == self_pos - 1"
-            type="number" id="bid" max="vm.payoff" min="0"
+            type="number" id="bid" placeholder = "Bid" max="vm.payoff" min="0"
             style="width: 58%; margin-left: 22px; margin-bottom: 5px;"
             onKeyPress="if (event.keyCode == 13) return false"/>
 
-        <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+        <textarea id="inputMessage" placeholder = "Message" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"/>
 
          <button type="button" class="btn btn-large"
             style="margin-left: 22px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
@@ -643,11 +643,11 @@
             disabled>Bid</button>
 
         <input v-if="bid_clicked && comp_pos == self_pos - 1"
-            type="number" id="bid" max="vm.payoff" min="0"
+            type="number" id="bid" placeholder = "Bid" max="vm.payoff" min="0"
             style="width: 58%; margin-left: 22px"
             onKeyPress="if (event.keyCode == 13) return false"/>
 
-            <textarea id="inputMessage" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"  />
+        <textarea id="inputMessage" placeholder = "Message" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed && messaging"/>
 
          <button type="button" class="btn btn-large"
             style="margin-left: 18px;" v-if="bid_clicked && comp_pos == self_pos - 1 && trade_allowed"
