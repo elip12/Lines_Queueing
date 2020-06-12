@@ -253,7 +253,7 @@ class BetweenPages(Page):
             history[row_index]['requester_id'] = int(current_row['requester_id'])
             history[row_index]['status'] = current_row['status'].iloc[0]
             transaction = current_row['transaction_price'].values[0]
-            if transaction == None or transaction == 'N/A' or np.isnan(transaction) == True:
+            if not transaction or transaction == 'N/A' or transaction == 'None':
                 history[row_index]['transaction_price'] = 0.0
             else:
                 history[row_index]['transaction_price'] = float(current_row['transaction_price'])
