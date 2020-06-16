@@ -343,8 +343,11 @@ class Results(Page):
 # order in which pages are displayed. A page's is_displayed method
 # can override this, and not all pages defined above need to be included
 page_sequence = [
-#    Instructions,
     Welcome,
+    Quiz1,
+    Quiz2,
+    Quiz3,
+    Quiz4,
     PracticeRoundWaitPage,
     PracticeRound,
     QueueServiceWaitPage,
