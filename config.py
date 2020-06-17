@@ -3,7 +3,6 @@ import math
 import json
 import pandas as pd
 from os.path import join
-from .models import session
 
 #XXX: DATA PATHS
 CONFIG_FOLDER = join('Lines_Queueing', 'configs')
