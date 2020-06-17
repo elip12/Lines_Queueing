@@ -6,11 +6,9 @@ from os.path import join
 from .models import session
 
 #XXX: DATA PATHS
-config_group = session.config['config_group']
-config_player = session.config['config_player']
 CONFIG_FOLDER = join('Lines_Queueing', 'configs')
-GROUP_CSV = join(CONFIG_FOLDER, config_group)
-PLAYER_CSV = join(CONFIG_FOLDER, config_player)
+GROUP_CSV = join(CONFIG_FOLDER, 'config_group_test8.csv')
+PLAYER_CSV = join(CONFIG_FOLDER, 'config_player_test8.csv')
 
 # DATA FORMAT
 # [ all data
