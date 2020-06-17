@@ -126,6 +126,277 @@ class Player(BasePlayer):
         print(self.round_payoff)
         self.participant.payoff += self.round_payoff
         print(self.participant.payoff)
+    
+    # quiz question after the instruction and before the practice round. general quiz.
+    quiz1 = models.StringField(
+        choices=[
+            'N-1',
+            'N+1',
+            'N',
+            'Not affected by N'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: If there are N players in your group, how many trading periods will you experience in each period?'
+    )
+
+    def quiz1_error_message(self, value):
+        if value != 'N+1':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    quiz2 = models.StringField(
+        choices=[
+            'Player user ID',
+            'Player position in the line'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: What does the number mean in each circle on the screen?'
+    )
+
+    def quiz2_error_message(self, value):
+        if value != 'Player position in the line':
+            return 'This is the wrong answer. Please choose the correct one.'
+       
+    quiz3 = models.StringField(
+        choices=[
+            'The one in front of you',
+            'The one behind you',
+            'Both the one in front of and behind you',
+            'Anyone in the line'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: Which player can you actively interact with in each period?'
+    )
+
+    def quiz3_error_message(self, value):
+        if value != 'The one in front of you':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+   quiz4 = models.StringField(
+        choices=[
+            'The one in front of you',
+            'The one behind you',
+            'Both the one in front of and behind you',
+            'Anyone in the line'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question 4: Which player can actively interact with you in each period?'
+    )
+
+    def quiz4_error_message(self, value):
+        if value != 'The one behind you':
+            return 'This is the wrong answer. Please choose the correct one.'
+     
+    quiz5 = models.StringField(
+        choices=[
+            'That player is currently involved in other transactions.',
+            'That player rejects everyone’s transactions.',
+            'You are not allowed to switch in that trading period.',
+            'The system has a bug.'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In some cases you trade button turns grey and you cannot trade with players in front of you. What causes the problem?'
+    )
+
+    def quiz5_error_message(self, value):
+        if value != 'That player is currently involved in other transactions.':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    quiz6 = models.StringField(
+        choices=[
+            'Yes','No'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: Is there anything you can do after you get served?'
+    )
+
+    def quiz6_error_message(self, value):
+        if value != 'No':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    quiz7 = models.StringField(
+        choices=[
+            'Yes','No'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: Will your payoff change after service?'
+    )
+
+    def quiz7_error_message(self, value):
+        if value != 'No':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    quiz8 = models.StringField(
+        choices=[
+            'Yes','No'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: Given the same T, do you always earn a higher payoff when you enter the service room early?'
+    )
+
+    def quiz8_error_message(self, value):
+        if value != 'Yes':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    # quiz for TILI treatment
+    quiz9 = models.StringField(
+        choices=[
+           '49', '53', '43', '48'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: Suppose you are playing Take/leave treatment with a group of 6 players. Your initial position is 4, endowment is 50, value is 10, and cost is 4. You get 5 from transactions so T=5. What is your final payoff?'
+    )
+
+    def quiz9_error_message(self, value):
+        if value != '53':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    quiz10 = models.StringField(
+        choices=[
+           'Below 5', 'Above 5', 'Any price', 'Depends'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Take/leave treatments, if your cost is 5, what bidding price should you propose to the player in front of you?'
+    )
+
+    def quiz10_error_message(self, value):
+        if value != 'Below 5':
+            return 'This is the wrong answer. Please choose the correct one.'
+    
+    quiz11 = models.StringField(
+        choices=[
+           'Below 5', 'Above 5', 'Any price', 'Depends'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Take/leave treatments, if your cost is 5, what asking price from the player behind you should you accept?'
+    )
+
+    def quiz11_error_message(self, value):
+        if value != 'Above 5':
+            return 'This is the wrong answer. Please choose the correct one.'
+    
+    quiz12 = models.StringField(
+        choices=[
+           '5', '6', '7', '0'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: Suppose you are playing Take/leave treatment, The player behind you propose 7 to you and you accept. How much will you receive?'
+    )
+
+    def quiz12_error_message(self, value):
+        if value != '7':
+            return 'This is the wrong answer. Please choose the correct one.'
+    
+    # quiz for double treatment
+    quiz13 = models.StringField(
+        choices=[
+           '49', '53', '43', '48'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: Suppose you are playing Double treatment with a group of 6 players. Your initial position is 4, endowment is 50, value is 10, and cost is 4. You get 5 from transactions so T=5. What is your final payoff?'
+    )
+
+    def quiz13_error_message(self, value):
+        if value != '53':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    quiz14 = models.StringField(
+        choices=[
+           'Below 5', 'Above 5', 'Any price', 'Depends'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Double treatments, if your cost is 5, what bidding price should you propose to the player in front of you?'
+    )
+
+    def quiz14_error_message(self, value):
+        if value != 'Below 5':
+            return 'This is the wrong answer. Please choose the correct one.'
+    
+    quiz15 = models.StringField(
+        choices=[
+           'Below 5', 'Above 5', 'Any price', 'Depends'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Double treatments, if your cost is 5, what asking price from the player behind you should you accept?'
+    )
+
+    def quiz15_error_message(self, value):
+        if value != 'Above 5':
+            return 'This is the wrong answer. Please choose the correct one.'
+    
+    quiz16 = models.StringField(
+        choices=[
+           'Yes; 5', 'Yes; 4.5', 'Yes; 4', 'No; 0'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: Suppose you are playing Double treatment, you propose 5 to the player in front of you and they return 4. Will the transaction be accepted? How much will you transfer to that player? '
+    )
+
+    def quiz16_error_message(self, value):
+        if value != 'Yes; 4.5':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    # quiz for token treatment
+    quiz17 = models.StringField(
+        choices=[
+           'Yes', 'No'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Token treatments, do you earn or lose anything immediately from switching with other players? (The change of position will affect your payoff but it is an immediate impact)'
+    )
+
+    def quiz17_error_message(self, value):
+        if value != 'No':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    quiz18 = models.StringField(
+        choices=[
+           'Yes', 'No'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Token treatments, does the number of tokens you own affect your final payoff?'
+    )
+
+    def quiz18_error_message(self, value):
+        if value != 'No':
+            return 'This is the wrong answer. Please choose the correct one.'
+    
+    quiz19 = models.StringField(
+        choices=[
+           'Yes', 'No'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Token treatments, can you see others number of tokens before transaction?'
+    )
+
+    def quiz19_error_message(self, value):
+        if value != 'Yes':
+            return 'This is the wrong answer. Please choose the correct one.'
+    
+    quiz20 = models.StringField(
+        choices=[
+           'I switch with someone behind me.',
+           'I switch with someone in front of me.'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Token treatments, when will you earn tokens?'
+    )
+
+    def quiz20_error_message(self, value):
+        if value != 'I switch with someone behind me.':
+            return 'This is the wrong answer. Please choose the correct one.'
+        
+    quiz21 = models.StringField(
+        choices=[
+           'I switch with someone behind me.',
+           'I switch with someone in front of me.'
+        ],
+        widget=widgets.RadioSelect,
+        label='Question: In Token treatments, when will you lose tokens?'
+    )
+
+    def quiz21_error_message(self, value):
+        if value != 'I switch with someone in front of me.':
+            return 'This is the wrong answer. Please choose the correct one.'
 
 
 class Group(RedwoodGroup):

@@ -20,6 +20,38 @@ class Instructions(Page):
 
     def is_displayed(self):
         return self.round_number == 1
+    
+class Quiz1(Page):
+
+    form_model = 'player'
+    form_fields = ['quiz1', 'quiz2', 'quiz3', 'quiz4', 'quiz5', 'quiz6', 'quiz7', 'quiz8']
+
+    def is_displayed(self):
+        return self.round_number == 1
+
+class Quiz2(Page):
+
+    form_model = 'player'
+    form_fields = ['quiz9', 'quiz10', 'quiz11', 'quiz12']
+
+    def is_displayed(self):
+        return self.round_number == 1 and self.player.swap_method() == 'take/Leave'
+ 
+class Quiz3(Page):
+
+    form_model = 'player'
+    form_fields = ['quiz13', 'quiz14', 'quiz15', 'quiz16']
+
+    def is_displayed(self):
+        return self.round_number == 1 and self.player.swap_method() == 'double'
+
+class Quiz4(Page):
+
+    form_model = 'player'
+    form_fields = ['quiz17', 'quiz18', 'quiz19', 'quiz20', 'quiz21']
+
+    def is_displayed(self):
+        return self.round_number == 1 and self.player.swap_method() == 'token'
 
 class PracticeRound(Page):
 
@@ -311,8 +343,11 @@ class Results(Page):
 # order in which pages are displayed. A page's is_displayed method
 # can override this, and not all pages defined above need to be included
 page_sequence = [
-#    Instructions,
     Welcome,
+    Quiz1,
+    Quiz2,
+    Quiz3,
+    Quiz4,
     PracticeRoundWaitPage,
     PracticeRound,
     QueueServiceWaitPage,
