@@ -35,7 +35,10 @@ class Quiz2(Page):
     form_fields = ['quiz9', 'quiz10', 'quiz11', 'quiz12']
 
     def is_displayed(self):
-        return self.round_number == 1 and self.player.swap_method() == 'take/Leave'
+        g_index = self.participant.vars[self.round_number]['group']
+        return self.round_number == 1 and Constants.config[g_index][self.round_number - 1][
+                'settings'
+            ]['swap_method'] == 'take/Leave'
  
 class Quiz3(Page):
 
@@ -43,7 +46,10 @@ class Quiz3(Page):
     form_fields = ['quiz13', 'quiz14', 'quiz15', 'quiz16']
 
     def is_displayed(self):
-        return self.round_number == 1 and self.player.swap_method() == 'double'
+        g_index = self.participant.vars[self.round_number]['group']
+        return self.round_number == 1 and Constants.config[g_index][self.round_number - 1][
+                'settings'
+            ]['swap_method'] == 'double'
 
 class Quiz4(Page):
 
@@ -51,7 +57,10 @@ class Quiz4(Page):
     form_fields = ['quiz17', 'quiz18', 'quiz19', 'quiz20', 'quiz21']
 
     def is_displayed(self):
-        return self.round_number == 1 and self.player.swap_method() == 'token'
+        g_index = self.participant.vars[self.round_number]['group']
+        return self.round_number == 1 and Constants.config[g_index][self.round_number - 1][
+                'settings'
+            ]['swap_method'] == 'token'
 
 class PracticeRound(Page):
 

@@ -171,7 +171,7 @@ class Player(BasePlayer):
         if value != 'The one in front of you':
             return 'This is the wrong answer. Please choose the correct one.'
         
-   quiz4 = models.StringField(
+    quiz4 = models.StringField(
         choices=[
             'The one in front of you',
             'The one behind you',
