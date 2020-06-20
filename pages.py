@@ -12,14 +12,6 @@ Eli Pandolfo <epandolf@ucsc.edu>
 class Welcome(Page):
     def is_displayed(self):
         return self.round_number == 1
-
-class Instructions(Page):
-
-    form_model = 'player'
-    form_fields = ['time_Instructions']
-
-    def is_displayed(self):
-        return self.round_number == 1
     
 class Quiz1(Page):
 
@@ -65,7 +57,9 @@ class Quiz4(Page):
 class PracticeRound(Page):
 
     def is_displayed(self):
-        return self.round_number == 1
+        g_index = self.participant.vars[self.round_number]['group']
+        block = Constants.config[g_index][self.round_number - 1]['settings']['block_id']
+        return block is 0
 
     form_model = 'player'
     form_fields = [ ]
@@ -142,14 +136,7 @@ class PracticeRound(Page):
         if self.round_number == self.session.vars['pr']:
             self.player.set_payoffs()
 
-class QueueServiceWaitPage(WaitPage):
-    def is_displayed(self):
-        return self.round_number > 1
-    pass
-
-class PracticeRoundWaitPage(WaitPage):
-    def is_displayed(self):
-        return self.round_number == 1
+class BeforeServiceWaitPage(WaitPage):
     pass
 
 
@@ -176,7 +163,9 @@ class QueueService(Page):
     ]
 
     def is_displayed(self):
-        return self.round_number > 1
+        g_index = self.participant.vars[self.round_number]['group']
+        block = Constants.config[g_index][self.round_number - 1]['settings']['block_id']
+        return block is not 0
 
     def get_timeout_seconds(self):
         g_index = self.participant.vars[self.round_number]['group']
@@ -331,7 +320,7 @@ class BetweenPages(Page):
 
 class AfterService(WaitPage):
     def is_displayed(self):
-        return self.round_number >= 1
+        return True
 
 # displays experiment results
 class Results(Page):
@@ -357,9 +346,8 @@ page_sequence = [
     Quiz2,
     Quiz3,
     Quiz4,
-    PracticeRoundWaitPage,
+    BeforeServiceWaitPage,
     PracticeRound,
-    QueueServiceWaitPage,
     QueueService,
     AfterService,
     BetweenPages,
