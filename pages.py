@@ -330,7 +330,7 @@ class Results(Page):
     def vars_for_template(self):
 
         return {
-            'payoffRound': Constants.payoff_round_number,
+            'payoffRound': self.session.vars['pr'],
             'payoffAmount': self.participant.payoff
         }
 
