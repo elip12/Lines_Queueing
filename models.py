@@ -164,26 +164,11 @@ class Player(BasePlayer):
             'Anyone in the line'
         ],
         widget=widgets.RadioSelect,
-        label='Question: Which player can you actively interact with in each period?'
+        label='Question: Which player can you interact with in each period?'
     )
 
     def quiz3_error_message(self, value):
-        if value != 'The one in front of you':
-            return 'This is the wrong answer. Please choose the correct one.'
-        
-    quiz4 = models.StringField(
-        choices=[
-            'The one in front of you',
-            'The one behind you',
-            'Both the one in front of and behind you',
-            'Anyone in the line'
-        ],
-        widget=widgets.RadioSelect,
-        label='Question 4: Which player can actively interact with you in each period?'
-    )
-
-    def quiz4_error_message(self, value):
-        if value != 'The one behind you':
+        if value != 'Both the one in front of and behind you':
             return 'This is the wrong answer. Please choose the correct one.'
      
     quiz5 = models.StringField(
@@ -218,7 +203,7 @@ class Player(BasePlayer):
             'Yes','No'
         ],
         widget=widgets.RadioSelect,
-        label='Question: Will your payoff change after service?'
+        label='Question: Will your payoff change after you receive your service value and leave service room?'
     )
 
     def quiz7_error_message(self, value):
