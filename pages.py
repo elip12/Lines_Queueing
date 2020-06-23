@@ -16,7 +16,7 @@ class Welcome(Page):
 class Quiz1(Page):
 
     form_model = 'player'
-    form_fields = ['quiz1', 'quiz2', 'quiz3', 'quiz4', 'quiz5', 'quiz6', 'quiz7', 'quiz8']
+    form_fields = ['quiz1', 'quiz2', 'quiz3', 'quiz5', 'quiz6', 'quiz7', 'quiz8']
 
     def is_displayed(self):
         return self.round_number == 1
@@ -242,6 +242,8 @@ class QueueService(Page):
 
 # round debrief, displayed after queue service page. Has no specific data yet
 class BetweenPages(Page):
+    timeout_seconds = 20
+    
     form_model = 'player'
     form_fields = ['time_BP']
 
