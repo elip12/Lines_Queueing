@@ -1,0 +1,107 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    Instruction
+{% endblock %}
+
+{% block content %}
+
+<p>
+In this experiment, you will interact with other players in multiple rounds. 
+In each round, you will be grouped randomly and anonymously with several other participants and will be “standing in a line” with others, waiting to be “served”. 
+Each participant has three possible statuses: “waiting in the line”, “in service”, and “served”. 
+</p>
+
+<p>
+At the beginning of each round, you will get some amount (in points) of initial endowment E. 
+You will also receive some value V after you complete your service. 
+However, as in real life, waiting in line is costly. 
+You will lose C points for every person who is served before you. 
+This will represent the cost of waiting.
+</p>
+
+<p>
+The order of the line will be determined randomly at the beginning of each round. 
+The round will be divided into several periods (“trading periods”), where each period encompasses one player’s service turn. 
+At the beginning of each round (the first trading period starts), every participant is “waiting in the line” and they can start to exchange positions with the participants immediately next to them. 
+Depending on the rule, a button will be visible under the person immediately in front of you. 
+If the button is grey, this means the person you are trying to interact with is already interacting with the person in front of them; otherwise, you may initiate an interaction with said person. 
+</p>
+
+<p>
+Participants can exchange positions with others under specific rules (detailed in the next section). 
+At the end of the first “trading period”, the first participant in the line will go to the service room, others remain in the line and the second trading period will start. 
+The service for each participant will take one “trading period” (20 seconds) and the round ends when all participants have finished the service.
+</p>
+
+<p>
+Your payoff in each round will be given by <b> E + V - (n-1)*C + T </b>, where n is the order or place in which you are served. 
+For the first to be served n=1, for the second to be served n=2, and so on. 
+<b>T (trade)</b> is the sum of all transfers you receive minus all transfers you make from trading or exchanging places with others. 
+In some periods, you cannot trade money with other participants, so T will be 0 in those periods.
+</p>
+
+<p>
+<b>E (Endowment)</b> is the value you have at the beginning of each period. 
+<b>V (Value)</b> is the value of the service, which will be applied to a player’s point total only after they have finished their service turn. 
+<b>C (Cost)</b> is the time cost per trading period which will be deducted from a player’s point total after each trading period they participate in that does not send them to the service room.	
+This cost C will be different for different people and even for the same person in different periods. 
+C will be determined randomly for each player in each period. 
+All numbers between 1 and 6 are equally likely. 
+At the beginning of each period, your C will be revealed to you on your screen. 
+Each person’s C is private information to them. No one else will know your C and you will not be informed of anyone else’s C.  
+E and V are the same for everyone in your group.
+</p>
+
+<br>
+<br>
+
+<h2> Interaction Rules </h2>
+
+<p>
+You will interact under four (4) possible rules:
+</p>
+
+<p>
+<b>Swap</b>: Under this rule, you simply ask the participant directly in front of you to exchange positions. 
+The requester needs to either accept or decline your exchange request. 
+You may also receive the exchange request from participants directly behind you.
+</p>
+
+<p>
+<b>Double</b>: Under this rule, you can send an offer to the person in front of you. The requestee will need to send a price back to you. 
+If your price is higher than or equal to the requestee’s price, the offer succeeds. 
+Both of you exchange positions and you will transfer the average of your offer and the requestee’s price to the requestee. 
+You may also receive an offer from participants directly behind you and you will need to respond to that offer.
+</p>
+
+<p>
+<b>Take/leave</b>: Under this rule, you can send an offer to the person in front of you. 
+The requester needs to either accept or decline your offer. 
+If accepted, both of you exchange positions and you will transfer your offer to the requester. 
+You may also receive an offer from participants directly behind you and you will need to respond to that offer. 
+</p>
+
+<p>
+<b>Token</b>: Under this rule, you participate in the same environment as in the Swap rule. 
+However, after each exchange, you will gain (lose) a token if you move back (forward) a spot. 
+Each person starts the block of token rounds with 0 tokens and will accumulate or lose tokens over the course of the block. 
+Tokens do not pay dividends and are not converted to money at any point in the experiment. 
+Only the points earned during each round may be converted to money.
+</p>
+
+<p>
+Also, on some rounds, you may be allowed to use a chatbox to send a text message with your offer price (or exchange request). 
+You can only be involved in one offer (or exchange request) at a time. 
+If you are involved in an offer, you cannot receive an offer from other participants. 
+Similarly, you cannot trade with participants who are currently in an offer.
+</p>
+
+<p>
+If you finish reading, please press next.
+</p>
+
+    {% next_button %}
+
+{% endblock %}
