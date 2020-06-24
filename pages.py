@@ -12,6 +12,14 @@ Eli Pandolfo <epandolf@ucsc.edu>
 class Welcome(Page):
     def is_displayed(self):
         return self.round_number == 1
+
+class Instruction(Page):
+    def is_displayed(self):
+        return self.round_number == 1
+    
+class UserInterface(Page):
+    def is_displayed(self):
+        return self.round_number == 1
     
 class Quiz1(Page):
 
@@ -344,6 +352,8 @@ class Results(Page):
 # can override this, and not all pages defined above need to be included
 page_sequence = [
     Welcome,
+    Instruction,
+    UserInterface,
     Quiz1,
     Quiz2,
     Quiz3,
