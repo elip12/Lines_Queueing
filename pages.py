@@ -71,6 +71,7 @@ class PracticeRound(Page):
 
     form_model = 'player'
     form_fields = [ 
+        'start_pos',
         'round_payoff',
         'endowment',
         'pay_rate',
@@ -266,20 +267,24 @@ class BetweenPages(Page):
     def vars_for_template(self):
         g_index = self.participant.vars[self.round_number]['group']
 
-        start = {}
-        # {id: start_pos}
-        for player_id in range(1, Constants.players_per_group + 1):
-            player = self.group.get_player_by_id(player_id)
-            # since p_data in session vars doesn't change from starting pos
-            start[player_id] = self.session.vars[self.round_number][g_index][player_id]['pos']
-        # sorted by value (start_pos/pos)
-        start = {k: v for k, v in sorted(start.items(), key=lambda item: item[1])}
-        # dict_keys of list of id's in starting line order
-        # first element is first player id
-        startLine = start.keys()
+        # start = {}
+        # # {id: start_pos}
+        # for player_id in range(1, Constants.players_per_group + 1):
+        #     player = self.group.get_player_by_id(player_id)
+        #     # since p_data in session vars doesn't change from starting pos
+        #     start[player_id] = self.session.vars[self.round_number][g_index][player_id]['pos']
+        # # sorted by value (start_pos/pos)
+        # start = {k: v for k, v in sorted(start.items(), key=lambda item: item[1])}
+        # # dict_keys of list of id's in starting line order
+        # # first element is first player id
+        # startLine = start.keys()
 
-        # the last cache data
-        endLine = self.group.queue_state(self.group.cache)
+        # # the last cache data
+        # endLine = self.group.queue_state(self.group.cache)
+
+        startLine = list(range(1, Constants.players_per_group + 1))
+        end = self.group.queue_state(self.group.cache)
+        endLine = [self.group.get_player_by_id(a).start_pos for a in end]
 
         self.participant.vars[self.round_number]['tokens'] = self.player.tokens
 
@@ -319,8 +324,8 @@ class BetweenPages(Page):
             # lists are reversed to match the layout of line
             # [1,2,3,4]
             # player 4 is first, 3 is second, 2 is third, 1 is last
-            'startLine': [a for a in reversed(list(startLine))],
-            'endLine': [a for a in reversed(endLine)],
+            'startLine': startLine,
+            'endLine': endLine,
             'numPlayers': Constants.players_per_group,
             'history': history,
             'id': self.player.id_in_group,
