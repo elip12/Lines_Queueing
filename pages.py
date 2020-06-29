@@ -70,7 +70,12 @@ class PracticeRound(Page):
         return block is 0
 
     form_model = 'player'
-    form_fields = [ ]
+    form_fields = [ 
+        'round_payoff',
+        'endowment',
+        'pay_rate',
+        'waiting'
+    ]
 
     def get_timeout_seconds(self):
         g_index = self.participant.vars[self.round_number]['group']
@@ -320,7 +325,14 @@ class BetweenPages(Page):
             'history': history,
             'id': self.player.id_in_group,
             'tokens': self.player.tokens,
+
             'roundpayoff': self.player.round_payoff,
+            'endowment': self.player.endowment,
+            'value': self.player.pay_rate,
+            'waiting_cost': self.player.waiting,
+            'transfer': self.player.round_payoff - self.player.endowment - 
+                        self.player.pay_rate - self.player.waiting,
+
             'group': self.group,
             'Asdf': self.group.get_players
         }

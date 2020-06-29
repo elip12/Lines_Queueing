@@ -17,7 +17,12 @@
             displayed: [],
             startLine: {{ startLine | json }},
             endLine: {{ endLine | json }},
-            roundPayoff: {{ roundpayoff | json }}
+
+            roundPayoff: {{ roundpayoff | json }},
+            endowment: {{ endowment | json }},
+            value: {{ value | json }},
+            waiting_cost: {{ waiting_cost | json }},
+            transfer: {{ transfer | json }}
 
             
         },
@@ -92,6 +97,17 @@
             <td> {( action.amount )} </td>
             <td> {( action.message )} </td>
             <td> {( action.status )} </td>
+        </tr>
+    </table>
+
+    <table class="table">
+        <tr>
+            <th> </th>
+            <th>Payoff</th>
+        </tr>
+        <tr v-for="payoff breakdown">
+            <td> Endowment <br> Value <br> Waiting Cost <br> Transfer <br> Total </td>
+            <td> {( endowment )} <br> {( value )} <br> {( waiting_cost )} <br> {( transfer )} <br> {( roundPayoff )}
         </tr>
     </table>
 

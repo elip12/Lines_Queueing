@@ -115,6 +115,8 @@ class Player(BasePlayer):
     # c (cost per time not in service)
     cost = models.FloatField()
 
+    waiting = models.FloatField()
+
     def set_payoffs(self):
         self.payoff = self.in_round(
             self.session.vars['pr']).round_payoff

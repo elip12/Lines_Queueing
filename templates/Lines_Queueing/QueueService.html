@@ -95,6 +95,7 @@
                     served: false,
                     endowment: {{ endowment_ | json }},
                     payoff: {{ endowment_ | json }},
+                    waiting_cost: 0,
                     tokens: {{ tokens_ | json }},
                     position: {{ start_pos_ | json }},
                     in_trade: false, // state
@@ -218,6 +219,7 @@
                         // this continues until the player enters the service room
                         // or if they stay in the line until the end of the period
                         this.payoff -= this.c
+                        this.waiting_cost -= this.c
                     }
                     //console.log(g_data)
                 },
@@ -886,6 +888,7 @@
         <input type="hidden" name="waiting_time" v-model="waiting_time"/>
         <input type="hidden" name="end_pos" v-model="end_pos"/>
         <input type="hidden" name="tokens" v-model="tokens"/>
+        <input type="hidden" name="waiting" v-model="waiting_cost"/>
 
 
         <!-- {% chat %} -->
