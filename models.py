@@ -755,7 +755,16 @@ class Subsession(BaseSubsession):
             self.session.vars['metadata_requests'] = {}
             self.session.vars['data_fname'] = data_fname
 
-            self.session.vars['pr'] = random.randint(2, Constants.num_rounds)
+            non_practice_rounds = []
+
+            # Constants.config[group number][round]
+            group0 = Constants.config[0]
+            for round_num, period in enumerate(group0):
+                if period['settings']['block_id'] is not 0:
+                    non_practice_rounds.append(round_num+1)
+
+            self.session.vars['pr'] = random.choice(non_practice_rounds)
+            # self.session.vars['pr'] = random.randint(2, Constants.num_rounds)
 
             # just dump header
             self.dump_metadata()
