@@ -1,0 +1,25 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    Interaction Rules - Token
+{% endblock %}
+
+{% block content %}
+
+<p>
+In the following rounds, you will interact under <b>Token</b>: 
+Under this rule, you participate in the same environment as in the Swap rule. 
+However, after each exchange, you will gain (lose) a token if you move back (forward) a spot. 
+Each person starts the block of token rounds with 0 tokens and will accumulate or lose tokens over the course of the block. 
+Tokens do not pay dividends and are not converted to money at any point in the experiment. 
+Only the points earned during each round may be converted to money.
+</p>
+
+<p>
+If you finish reading, please press next to take a quiz before you start the practice round.
+</p>
+
+    {% next_button %}
+
+{% endblock %}
