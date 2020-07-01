@@ -21,15 +21,43 @@ class UserInterface(Page):
     def is_displayed(self):
         return self.round_number == 1
     
-class Quiz1(Page):
+class InstructionSwap(Page):
+    def is_displayed(self):
+        g_index = self.participant.vars[self.round_number]['group']
+        return self.round_number == 1 and Constants.config[g_index][self.round_number - 1][
+                'settings'
+            ]['swap_method'] == 'swap'
+    
+class InstructionTili(Page):
+    def is_displayed(self):
+        g_index = self.participant.vars[self.round_number]['group']
+        return self.round_number == 1 and Constants.config[g_index][self.round_number - 1][
+                'settings'
+            ]['swap_method'] == 'take/Leave'
+    
+class InstructionDouble(Page):
+    def is_displayed(self):
+        g_index = self.participant.vars[self.round_number]['group']
+        return self.round_number == 1 and Constants.config[g_index][self.round_number - 1][
+                'settings'
+            ]['swap_method'] == 'double'
+    
+class InstructionToken(Page):
+    def is_displayed(self):
+        g_index = self.participant.vars[self.round_number]['group']
+        return self.round_number == 1 and Constants.config[g_index][self.round_number - 1][
+                'settings'
+            ]['swap_method'] == 'token'
+    
+class Quiz(Page):
 
     form_model = 'player'
-    form_fields = ['quiz1', 'quiz2', 'quiz3', 'quiz5', 'quiz6', 'quiz7', 'quiz8']
+    form_fields = ['quiz1', 'quiz2', 'quiz3', 'quiz4', 'quiz5']
 
     def is_displayed(self):
         return self.round_number == 1
 
-class Quiz2(Page):
+class QuizTili(Page):
 
     form_model = 'player'
     form_fields = ['quiz9', 'quiz10', 'quiz11', 'quiz12']
@@ -40,7 +68,7 @@ class Quiz2(Page):
                 'settings'
             ]['swap_method'] == 'take/Leave'
  
-class Quiz3(Page):
+class QuizDouble(Page):
 
     form_model = 'player'
     form_fields = ['quiz13', 'quiz14', 'quiz15', 'quiz16']
@@ -51,10 +79,10 @@ class Quiz3(Page):
                 'settings'
             ]['swap_method'] == 'double'
 
-class Quiz4(Page):
+class QuizToken(Page):
 
     form_model = 'player'
-    form_fields = ['quiz17', 'quiz18', 'quiz19', 'quiz20', 'quiz21']
+    form_fields = ['quiz18', 'quiz19', 'quiz20', 'quiz21']
 
     def is_displayed(self):
         g_index = self.participant.vars[self.round_number]['group']
@@ -371,10 +399,14 @@ page_sequence = [
     Welcome,
     Instruction,
     UserInterface,
-    Quiz1,
-    Quiz2,
-    Quiz3,
-    Quiz4,
+    InstructionSwap,
+    InstructionTili,
+    InstructionDouble,
+    InstructionToken
+    Quiz,
+    QuizTili,
+    QuizDouble,
+    QuizToken,
     BeforeServiceWaitPage,
     PracticeRound,
     QueueService,
