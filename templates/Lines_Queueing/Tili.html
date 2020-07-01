@@ -1,0 +1,24 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    Interaction Rules - Take/leave
+{% endblock %}
+
+{% block content %}
+
+<p>
+In the following rounds, you will interact under <b>Double</b>: 
+Under this rule, you can send an offer to the person in front of you. The requestee will need to send a price back to you. 
+If your price is higher than or equal to the requestee’s price, the offer succeeds. 
+Both of you exchange positions and you will transfer the average of your offer and the requestee’s price to the requestee. 
+You may also receive an offer from participants directly behind you and you will need to respond to that offer.
+</p>
+
+<p>
+If you finish reading, please press next to take a quiz before you start the practice round.
+</p>
+
+    {% next_button %}
+
+{% endblock %}
