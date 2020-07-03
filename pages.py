@@ -24,26 +24,26 @@ class UserInterface(Page):
 class InstructionSwap(Page):
     def is_displayed(self):
         g_index = self.participant.vars[self.round_number]['group']
-        return Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0
-               and Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'swap'
+        return (Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0 and
+            Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'swap')
     
 class InstructionTili(Page):
     def is_displayed(self):
         g_index = self.participant.vars[self.round_number]['group']
-        return Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0
-               and Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'take/Leave'
+        return (Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0 and
+            Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'take/Leave')
     
 class InstructionDouble(Page):
     def is_displayed(self):
         g_index = self.participant.vars[self.round_number]['group']
-        return Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0
-               and Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'double'
+        return (Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0 and
+            Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'double')
     
 class InstructionToken(Page):
     def is_displayed(self):
         g_index = self.participant.vars[self.round_number]['group']
-        return Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0
-               and Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'token'
+        return (Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0 and
+            Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'token')
     
 class Quiz(Page):
 
@@ -60,8 +60,8 @@ class QuizTili(Page):
 
     def is_displayed(self):
         g_index = self.participant.vars[self.round_number]['group']
-        return Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0
-               and Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'take/Leave'
+        return (Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0 and
+            Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'take/Leave')
  
 class QuizDouble(Page):
 
@@ -70,8 +70,8 @@ class QuizDouble(Page):
 
     def is_displayed(self):
         g_index = self.participant.vars[self.round_number]['group']
-        return Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0
-               and Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'double'
+        return (Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0 and
+            Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'double')
 
 class QuizToken(Page):
 
@@ -80,8 +80,8 @@ class QuizToken(Page):
 
     def is_displayed(self):
         g_index = self.participant.vars[self.round_number]['group']
-        return Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0
-               and Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'token'
+        return (Constants.config[g_index][self.round_number - 1]['settings']['block_id'] is 0 and
+            Constants.config[g_index][self.round_number - 1]['settings']['swap_method'] == 'token')
 
 class PracticeRound(Page):
 
@@ -195,6 +195,7 @@ class QueueService(Page):
         'waiting_time',
         'end_pos',
         'tokens',
+        'waiting'
     ]
 
     def is_displayed(self):
@@ -395,7 +396,7 @@ page_sequence = [
     InstructionSwap,
     InstructionTili,
     InstructionDouble,
-    InstructionToken
+    InstructionToken,
     Quiz,
     QuizTili,
     QuizDouble,
