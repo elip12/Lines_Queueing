@@ -1,0 +1,23 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    Interaction Rules - Swap
+{% endblock %}
+
+{% block content %}
+
+<p>
+In the following rounds, you will interact under <b>Swap</b> rule: 
+Under this rule, you simply ask the participant directly in front of you to exchange positions. 
+The requester needs to either accept or decline your exchange request. 
+You may also receive the exchange request from participants directly behind you.
+</p>
+
+<p>
+If you finish reading, please press next to the practice round.
+</p>
+
+    {% next_button %}
+
+{% endblock %}
