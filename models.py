@@ -231,7 +231,7 @@ class Player(BasePlayer):
            '5', '4', 'Any price', 'Depends'
         ],
         widget=widgets.RadioSelect,
-        label='Question: Under Take/leave rule, if your cost is 5, what is the minimum amount you need to ask to avoid any loss?'
+        label='Question: Under Take/leave rule, if your cost is 5, what is the minimum amount of offer you can accept to avoid any loss?'
     )
 
     def quiz11_error_message(self, value):
