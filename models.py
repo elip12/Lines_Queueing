@@ -28,7 +28,7 @@ class Constants(BaseConstants):
     name_in_url = 'Lines_Queueing'
     participation_fee = c(5)
     
-    instructions_template = 'Lines_Queueing/Instruction.html'
+    instructions_template = 'Lines_Queueing/CheatSheet.html'
 
     config = config_py.export_data()
     #for g in config:
