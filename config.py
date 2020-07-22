@@ -6,8 +6,8 @@ from os.path import join
 
 #XXX: DATA PATHS
 CONFIG_FOLDER = join('Lines_Queueing', 'configs')
-GROUP_CSV = join(CONFIG_FOLDER, 'config_group_test6.csv')
-PLAYER_CSV = join(CONFIG_FOLDER, 'config_player_test6.csv')
+GROUP_CSV = join(CONFIG_FOLDER, 'config_group_test2.csv')
+PLAYER_CSV = join(CONFIG_FOLDER, 'config_player_test2.csv')
 
 # DATA FORMAT
 # [ all data
