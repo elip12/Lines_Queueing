@@ -131,8 +131,36 @@
 
     {% next_button %}
 
+{% if player.swap_method == 'swap' %}
+
 <br><br>
-    {% include Constants.instructions_template %}
+    {% include Constants.instructions_swap %}
+
+{% else %}
+    
+    {% if player.swap_method == 'take/Leave' %}
+    
+    <br><br>
+    {% include Constants.instructions_tili %}
+
+    {% else %}
+        
+        {% if player.swap_method == 'double' %}
+        
+        <br><br>
+        {% include Constants.instructions_double %}
+
+        {% else %}
+        
+        <br><br>
+        {% include Constants.instructions_token %}
+
+        {% endif %}
+
+    {% endif %}
+
+{% endif %}
+
 
 {% endblock %}
 
