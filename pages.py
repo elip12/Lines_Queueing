@@ -361,7 +361,11 @@ class BetweenPages(Page):
                         self.player.pay_rate - self.player.waiting,
 
             'group': self.group,
-            'Asdf': self.group.get_players
+            'Asdf': self.group.get_players,
+
+            'treatment': Constants.config[g_index][self.round_number - 1][
+                'settings'
+            ]['swap_method']
         }
 
     # def before_next_page(self):
