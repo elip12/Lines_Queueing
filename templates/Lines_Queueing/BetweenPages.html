@@ -22,7 +22,8 @@
             endowment: {{ endowment | json }},
             value: {{ value | json }},
             waiting_cost: {{ waiting_cost | json }},
-            transfer: {{ transfer | json }}
+            transfer: {{ transfer | json }},
+            treatment: {{ treatment | json }}
 
             
         },
@@ -131,8 +132,28 @@
 
     {% next_button %}
 
-<br><br>
-    {% include Constants.instructions_template %}
+{% if treatment == 'swap' %}
+
+    <br><br>
+    {% include Constants.instructions_swap %}
+
+{% elif treatment == 'take/Leave' %}
+    
+    <br><br>
+    {% include Constants.instructions_tili %}
+
+{% elif treatment == 'double' %}
+        
+    <br><br>
+    {% include Constants.instructions_double %}
+
+{% else %}
+    
+    <br><br>
+    {% include Constants.instructions_token %}
+
+{% endif %}
+
 
 {% endblock %}
 

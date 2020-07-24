@@ -2,13 +2,13 @@
 {% load otree static %}
 
 {% block title %}
-    Instruction - Swap
+    Instruction - Double
 {% endblock %}
 
 {% block content %}
 
 
-<h3>Basic ideas of the experiment</h3>
+<h4>Basic ideas of the experiment</h4>
 <ul>
   <li>In each round, you will be grouped randomly and anonymously with several other participants. 
 Each participant has three possible statuses: “waiting in the line”, “in service”, and “served”.  </li>
@@ -20,7 +20,7 @@ The service for each participant will take one period (20 seconds) and the round
 </ul>
 
 
-<h3>How your payoff is calculated</h3>
+<h4>How your payoff is calculated</h4>
 <ul>
   <li>Your payoff in each round will be given by <b> E + V - (n-1)*C + T </b>, where n is the order or place in which you are served.  </li>
   <li><b>E (Endowment)</b> is the value you have at the beginning of each period.  </li>
@@ -31,12 +31,13 @@ C will be determined randomly for each player in each period. </li>
 </ul>
 
 
-<h3>The rule you are currently playing: <b>Swap</b></h3>
+<h4>The rule you are currently playing: <b>Double</b></h4>
 <ul>
-  <li>You can ask the participant directly in front of you to exchange positions.  </li>
-  <li>The requester needs to either accept or decline your exchange request.  </li>
-  <li>You may also receive the exchange request from participants directly behind you. </li>
+  <li>You can send an offer to the person in front of you. The requestee will need to send a price back to you.  </li>
+  <li>The requestee cannot see your offer when they send back the price. </li>
+  <li>If your price is higher than or equal to the requestee’s price, the offer succeeds. 
+Both of you exchange positions and you will transfer the average of your offer and the requestee’s price to the requestee. </li>
+  <li>You may also receive an offer from participants directly behind you and you will need to respond to that offer. </li>
 </ul>
-
 
 {% endblock %}
