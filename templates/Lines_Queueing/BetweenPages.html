@@ -1,7 +1,50 @@
 {% extends "global/Page.html" %}
 {% load staticfiles otree %}
 
+{% block styles %}
+<style>
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
+</style>
+{% endblock %}
+
 {% block scripts %}
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
 <script src="{% static "js/vue.js" %}"></script>
 <script type="text/javascript">
     window.onload = function (){
@@ -134,23 +177,31 @@
 
 {% if treatment == 'swap' %}
 
-    <br><br>
-    {% include Constants.instructions_swap %}
+    <button type="button" class="collapsible">Review the Instruction</button>
+<div class="content">
+  {% include Constants.instructions_swap %}
+</div>
 
 {% elif treatment == 'take/Leave' %}
     
-    <br><br>
-    {% include Constants.instructions_tili %}
+    <button type="button" class="collapsible">Review the Instruction</button>
+<div class="content">
+  {% include Constants.instructions_tili %}
+</div>
 
 {% elif treatment == 'double' %}
         
-    <br><br>
-    {% include Constants.instructions_double %}
+    <button type="button" class="collapsible">Review the Instruction</button>
+<div class="content">
+  {% include Constants.instructions_double %}
+</div>
 
 {% else %}
     
-    <br><br>
-    {% include Constants.instructions_token %}
+    <button type="button" class="collapsible">Review the Instruction</button>
+<div class="content">
+  {% include Constants.instructions_token %}
+</div>
 
 {% endif %}
 
