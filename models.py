@@ -28,6 +28,7 @@ class Constants(BaseConstants):
     name_in_url = 'Lines_Queueing'
     participation_fee = c(5)
     
+    instructions = 'Lines_Queueing/CheatSheet.html'
     instructions_swap = 'Lines_Queueing/CheatSheetSwap.html'
     instructions_tili = 'Lines_Queueing/CheatSheetTili.html'
     instructions_double = 'Lines_Queueing/CheatSheetDouble.html'
