@@ -186,7 +186,7 @@ class Player(BasePlayer):
             'No;No'
         ],
         widget=widgets.RadioSelect,
-        label='Question: Is there anything you can do after you get served? Will your payoff change after you received your servicec value and leave the service room?'
+        label='Question: Is there anything you can do after you get served? Will your payoff change after you received your service value and leave the service room?'
     )
 
     def quiz4_error_message(self, value):
