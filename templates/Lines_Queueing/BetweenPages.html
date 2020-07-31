@@ -66,7 +66,8 @@ for (i = 0; i < coll.length; i++) {
             value: {{ value | json }},
             waiting_cost: {{ waiting_cost | json }},
             transfer: {{ transfer | json }},
-            treatment: {{ treatment | json }}
+            treatment: {{ treatment | json }},
+            messaging: {{ messaging | json }}
 
             
         },
@@ -131,15 +132,27 @@ for (i = 0; i < coll.length; i++) {
         <tr>
             <th>From</th>
             <th>To</th>
-            <th>Transfer</th>
-            <th>Message</th>
+            {% if treatment == 'take/Leave'  %}
+                <th>Transfer</th>
+            {% elif treatment == 'double' %}
+                <th>Transfer</th>
+            {% endif %}
+            {% if messaging %}
+                <th>Message</th>
+            {% endif %}
             <th>Result</th>
         </tr>
         <tr v-for="action in displayed">
             <td> {( action.from )} </td>
             <td> {( action.to )} </td>
-            <td> {( action.amount )} </td>
-            <td> {( action.message )} </td>
+            {% if treatment == 'take/Leave' %}
+                <td> {( action.amount )} </td>
+            {% elif treatment == 'double' %}
+                <td> {( action.amount )} </td>
+            {% endif %}
+            {% if messaging %}
+                <td> {( action.message )} </td>
+            {% endif %}
             <td> {( action.status )} </td>
         </tr>
     </table>
