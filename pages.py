@@ -365,7 +365,8 @@ class BetweenPages(Page):
 
             'treatment': Constants.config[g_index][self.round_number - 1][
                 'settings'
-            ]['swap_method']
+            ]['swap_method'],
+            'messaging': self.player.messaging
         }
 
     # def before_next_page(self):

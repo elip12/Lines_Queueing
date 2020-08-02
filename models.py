@@ -186,7 +186,7 @@ class Player(BasePlayer):
             'No;No'
         ],
         widget=widgets.RadioSelect,
-        label='Question: Is there anything you can do after you get served? Will your payoff change after you received your servicec value and leave the service room?'
+        label='Question: Is there anything you can do after you get served? Will your payoff change after you received your service value and leave the service room?'
     )
 
     def quiz4_error_message(self, value):
@@ -512,6 +512,9 @@ class Group(RedwoodGroup):
                         p2['requesting'] = None
                         p1['accepted'] = 2  # this should be unnecessary
                         p1['bid'] = None
+                        p2['bid'] = None
+
+                        metadata['transaction_price'] = 0
 
                         metadata['status'] = 'cancelled'
                         metadata['requester_pos_final'] = p2['pos']
