@@ -132,9 +132,7 @@ for (i = 0; i < coll.length; i++) {
         <tr>
             <th>From</th>
             <th>To</th>
-            {% if treatment == 'take/Leave'  %}
-                <th>Transfer</th>
-            {% elif treatment == 'double' %}
+            {% if treatment == 'take/Leave' or treatment == 'double' %}
                 <th>Transfer</th>
             {% endif %}
             {% if messaging %}
@@ -145,9 +143,7 @@ for (i = 0; i < coll.length; i++) {
         <tr v-for="action in displayed">
             <td> {( action.from )} </td>
             <td> {( action.to )} </td>
-            {% if treatment == 'take/Leave' %}
-                <td> {( action.amount )} </td>
-            {% elif treatment == 'double' %}
+            {% if treatment == 'take/Leave' or treatment == 'double' %}
                 <td> {( action.amount )} </td>
             {% endif %}
             {% if messaging %}

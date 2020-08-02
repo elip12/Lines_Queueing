@@ -512,6 +512,9 @@ class Group(RedwoodGroup):
                         p2['requesting'] = None
                         p1['accepted'] = 2  # this should be unnecessary
                         p1['bid'] = None
+                        p2['bid'] = None
+
+                        metadata['transaction_price'] = 0
 
                         metadata['status'] = 'cancelled'
                         metadata['requester_pos_final'] = p2['pos']
