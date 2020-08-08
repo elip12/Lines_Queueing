@@ -132,7 +132,7 @@ class Player(BasePlayer):
         print('in set payoffs')
         print(self.participant.payoff)
         print(self.round_payoff)
-        self.participant.payoff += self.round_payoff
+        self.participant.payoff = self.round_payoff
         print(self.participant.payoff)
     
     # quiz question after the instruction and before the practice round. general quiz.  
