@@ -15,16 +15,30 @@
 {% endblock %}
 
 {% block content %}
+
+<p>
+    Congratulations! You have completed the experiment. Below is the points you earn today. Thank you for your participation.
+</p>
     
     <!-- form field for page load time. Value attribute gets set by script on window load,
         and the form gets returned here -->
-    <input type="hidden" name="time_Results" id="arrive_time"/>
+    <input type="hidden" name="time_R" id="arrive_time"/>
     
-    <p>
-        Some results here
-    </p>
+    <div id="app">
 
-    {% next_button %}
+    <table class="table">
+        <tr>
+            <th>Payoff Round</th>
+            <th>Payoff Amount</th>
+        </tr>
+        <tr v-for="payoff round">
+            <td> Round {{ payoffRound }} </td>
+            <td> {{ payoffAmount }} </td>
+        </tr>
+    </table>
+
+    
+    </div>
 
 {% endblock %}
 

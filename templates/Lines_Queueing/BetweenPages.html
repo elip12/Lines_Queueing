@@ -1,34 +1,226 @@
 {% extends "global/Page.html" %}
 {% load staticfiles otree %}
 
+{% block styles %}
+<style>
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
+</style>
+{% endblock %}
+
 {% block scripts %}
-    <script type="text/javascript">
-        window.onload = function () 
-        {
-            document.getElementById("arrive_time").value = (new Date()).toISOString();
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
+<script src="{% static "js/vue.js" %}"></script>
+<script type="text/javascript">
+    window.onload = function (){
+        document.getElementById("arrive_time").value = (new Date()).toISOString();
+    }
+    var app = new Vue({
+        el: '#app',
+        data: {
+            history: {{ history | json }},
+            sent: [],
+            received: [],
+            id: {{ id }},
+            displayed: [],
+            startLine: {{ startLine | json }},
+            endLine: {{ endLine | json }},
+
+            roundPayoff: {{ roundpayoff | json }},
+            endowment: {{ endowment | json }},
+            value: {{ value | json }},
+            waiting_cost: {{ waiting_cost | json }},
+            transfer: {{ transfer | json }},
+            treatment: {{ treatment | json }},
+            messaging: {{ messaging | json }}
+
+            
+        },
+        delimiters: ["{(", ")}"],
+        methods: {
+            parseHistory: function(data, displayed){
+                for(let action in data){
+                    console.log("cool")
+                    console.log(displayed)
+
+                    if(data[action]['requester_id'] == this.id){
+                        console.log("fdfdf")
+                        displayed.push({
+                            from: "You",
+                            to: `Player ${data[action].requestee_id}`,
+                            status: data[action].status,
+                            amount: data[action].transaction_price,
+                            message: data[action].message
+                        })
+                    }
+                    else if(data[action]['requestee_id'] == this.id){
+                        console.log("joe mama")
+                        displayed.push({
+                            from: `Player ${data[action].requestee_id}`,
+                            to: "You",
+                            status: data[action].status,
+                            amount: data[action].transaction_price,
+                            message: data[action].message
+                        })
+
+                    }
+                 
+                }
+                
+            }
+            
+
+        },
+        mounted: function(){
+            console.log("MOUNTED")
+            console.log(this.history)
+            // this.history = JSON.parse(this.history)
+            this.parseHistory(this.history, this.displayed)
         }
-    </script>
+    })
+</script>
 {% endblock %}
 
 {% block title %}
-    Round {{ round }} Debrief
+    Round {{ round }} Summary
 {% endblock %}
 
 {% block content %}
-    <p>Starting Line</p>
-    {% for player in displayStartLine %}
-        <li>{{ player|safe }}</li>
-    {% endfor %}
     
     <!-- form field for page load time. Value attribute gets set by script on window load,
         and the form gets returned here -->
     <input type="hidden" name="time_BP" id="arrive_time"/>
     
-    <p>
-        Put something here if you want.
-    </p>
+    <div id="app">
+      
+      <p>"Player X" below in the table represent the player ID and you can use it to identify who traded with you in the last round.
+      But it does not provide extra information since the player ID changes every round for each participant.</p>
+
+    <table class="table">
+        <tr>
+            <th>From</th>
+            <th>To</th>
+            {% if treatment == 'take/Leave' or treatment == 'double' %}
+                <th>Transfer</th>
+            {% endif %}
+            {% if messaging %}
+                <th>Message</th>
+            {% endif %}
+            <th>Result</th>
+        </tr>
+        <tr v-for="action in displayed">
+            <td> {( action.from )} </td>
+            <td> {( action.to )} </td>
+            {% if treatment == 'take/Leave' or treatment == 'double' %}
+                <td> {( action.amount )} </td>
+            {% endif %}
+            {% if messaging %}
+                <td> {( action.message )} </td>
+            {% endif %}
+            <td> {( action.status )} </td>
+        </tr>
+    </table>
+      
+      <br><br>
+
+    <table class="table">
+        <tr>
+            <th> </th>
+            <th>Payoff</th>
+        </tr>
+        <tr v-for="payoff breakdown">
+            <td> Endowment <br> Value <br> Waiting Cost <br> Transfer <br> Total </td>
+            <td> {( endowment )} <br> {( value )} <br> {( waiting_cost )} <br> {( transfer )} <br> {( roundPayoff )}
+        </tr>
+    </table>
+      
+      <br><br>
+
+    <table class="table">
+        <tr>
+            <th> </th>
+            <th>Start Line</th>
+            <th>Final Line</th>
+            <th>Round Payoff</th>
+        </tr>
+        <tr v-for="line positions">
+            <td> Front <br> <br> <br> <br> <br> Back </td>
+            <td> {( startLine[0] )} <br> {( startLine[1] )} <br> {( startLine[2] )} <br> {( startLine[3] )} <br> {( startLine[4] )} <br> {( startLine[5] )} </td>
+            <td> {( endLine[0] )} <br> {( endLine[1] )} <br> {( endLine[2] )} <br> {( endLine[3] )} <br> {( endLine[4] )} <br> {( endLine[5] )} </td>
+            <td> {( roundPayoff )} </td>
+        </tr>
+    </table>
+
+    
+    </div>
 
     {% next_button %}
+
+{% if treatment == 'swap' %}
+
+    <button type="button" class="collapsible">Review the Instruction</button>
+<div class="content">
+  {% include Constants.instructions_swap %}
+</div>
+
+{% elif treatment == 'take/Leave' %}
+    
+    <button type="button" class="collapsible">Review the Instruction</button>
+<div class="content">
+  {% include Constants.instructions_tili %}
+</div>
+
+{% elif treatment == 'double' %}
+        
+    <button type="button" class="collapsible">Review the Instruction</button>
+<div class="content">
+  {% include Constants.instructions_double %}
+</div>
+
+{% else %}
+    
+    <button type="button" class="collapsible">Review the Instruction</button>
+<div class="content">
+  {% include Constants.instructions_token %}
+</div>
+
+{% endif %}
+
 
 {% endblock %}
 

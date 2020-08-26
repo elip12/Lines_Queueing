@@ -1,0 +1,54 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    User Interface
+{% endblock %}
+
+{% block content %}
+
+<p>
+Below shows the user interface of the experiment. The interface includes two panels:
+</p>
+
+<img class="center-fit" src="{% static "queue_ui.PNG" %}"/>
+
+{% block styles %}
+    <style>
+    	.center-fit {
+    		max-width: 100%;
+            max-height: 100vh;
+            margin: auto;
+    	}
+    </style>
+{% endblock %}
+
+<p>
+Upper panel shows the parameters and information of current round:
+</p>
+
+<ul>
+  <li>The first column shows the current round number. </li>
+  <li>The second column shows your own information: the value of service V, and your waiting cost C per period.</li>
+  <li>The third column shows the round information: Double\Swap\Take/Leave\Token, Communication\No Communication (You might only see some of them today)</li>
+  <li>The fourth column shows your current payoff.</li>
+  <li>The last column shows the remaining time in the current round (not the current period, notice the line will move forward during each round).
+      It is possible that the system has a few seconds lagging based on the quality of your internet connection.
+      As a result, your round may end when the remaining time is still positive. But it is guaranteed that everyone ends the round and each period in the round at the same time.</li>
+</ul>
+
+<p>
+Lower panel shows the information of current waiting line and participants’ status:
+</p>
+
+<ul>
+  <li>The number of circles shows the number of players in your group. Your position is marked in black.</li>
+  <li>The line is divided into three parts which correspond to participants’ status: “waiting in the line”(left), “being served”(middle), and “service finished”(right).</li>
+  <li>The button on the bottom of each participants’ circle shows how you can interact with them. (not shown on the figure but you will see it in the game)</li>
+</ul>
+
+<p>
+At the end of each round, you can review your game history from the previous round on your result page.
+</p>
+
+{% endblock %}
